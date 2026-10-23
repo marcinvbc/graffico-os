@@ -106,7 +106,7 @@
     title: 'GRAFFI Flow', sub: 'DEMO · WYBIERZ ROLĘ',
     html: function () {
       var r = function (go, ic, t, s) { return '<button class="role" data-go="' + go + '"><span class="ic">' + I[ic].replace('<svg', '<svg width="24" height="24"') + '</span><span><b>' + t + '</b><span>' + s + '</span></span></button>'; };
-      return '<section class="hero"><span class="eyebrow">System zarządzania firmą · prototyp</span><span style="display:block;width:clamp(64px,16vw,96px);margin:4px 0 6px">' + LOGO + '</span><h1 style="font-size:clamp(40px,12vw,72px);font-weight:700;letter-spacing:.04em;line-height:1">GRAFFI <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">FLOW</span></h1><p class="t-muted" style="margin:0;max-width:60ch">Wybierz, kim jesteś. Każda rola widzi swoje ekrany. Dane w demo są przykładowe.</p></section>' +
+      return '<section class="hero"><span class="eyebrow">System zarządzania firmą · prototyp</span><span style="display:block;width:clamp(64px,16vw,96px);margin:4px 0 6px">' + LOGO + '</span><h1 style="font-size:clamp(40px,12vw,72px);font-weight:700;letter-spacing:.04em;line-height:1">GRAFFI <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">FLOW</span></h1></section>' +
         '<div class="roles">' +
         r('pulpit', 'grid', 'Zarząd', 'Pulpit: zadania, alerty, wynik zleceń') +
         r('crm', 'crm', 'Handlowiec', 'Szanse, kreator oferty, umowa, przekazanie do realizacji') +
@@ -118,7 +118,7 @@
         r('kadry', 'people', 'Kadry / HR', 'Pracownicy, kompetencje, uprawnienia') +
         r('ustawienia', 'gear', 'Administrator', 'Ustawienia: agenci AI, modele LLM, integracje') +
         '</div>' +
-        '<div class="coinrow"><img src="' + COIN + '" alt=""><span>Grafficoiny – punkty za zadania wykonane w czasie. Widoczne na tablecie i monitorach hali.</span></div>' +
+        
         '<button class="btn" data-act="reset" style="align-self:flex-start">Resetuj demo (przed kolejną prezentacją)</button>';
     },
     on: function (act) {
@@ -659,9 +659,8 @@
       '<p class="t-muted" style="margin:0;font-size:14px">Agent leadów przeszukuje publiczne źródła (BIP, przetargi, nowe inwestycje, otwarcia obiektów) i proponuje szanse z uzasadnieniem i linkiem do źródła.</p>' +
       '<div><small class="t-muted">Region</small>' + chips('region', REGIONS, false) + '</div><div><small class="t-muted">Branże (opcjonalnie)</small>' + chips('branza', ['Paliwowa', 'Medyczna', 'Handlowa', 'Miasta, gminy', 'Nieruchomości', 'Produkcyjna', 'Hotelarstwo'], true) + '</div><div><small class="t-muted">Produkty (opcjonalnie)</small>' + chips('prod', ['Pylon cenowy', 'Pylon', 'Litery 3D', 'Kaseton', 'Witacz', 'Oznakowanie CH'], true) + '</div>' +
       '<div><small class="t-muted">Twoje zapytanie do agenta</small><div class="seg" style="margin:4px 0 6px"><button type="button" data-act="gset" data-k="mode" data-v="rozszerz" data-multi="0" aria-pressed="' + (gen.mode === 'rozszerz') + '">Rozszerz prompt</button><button type="button" data-act="gset" data-k="mode" data-v="zawez" data-multi="0" aria-pressed="' + (gen.mode === 'zawez') + '">Zawęź wyniki</button></div><label for="genQ" style="position:absolute;left:-9999px">Zapytanie</label><textarea id="genQ" class="in" rows="3" placeholder="' + (gen.mode === 'rozszerz' ? 'np. Szukaj też nowych przychodni i aptek otwieranych w 2027, sprawdź przetargi gmin na witacze' : 'np. Tylko inwestycje powyżej 50 tys. zł, tylko do 100 km od Torunia, bez przetargów publicznych') + '">' + esc(gen.q) + '</textarea></div>' +
-      '<button type="button" class="btn" data-act="gprompt" style="align-self:flex-start;min-height:38px;font-size:13px">' + (gen.showPrompt ? 'Ukryj' : 'Pokaż') + ' pełny prompt wysyłany do modelu</button>' + (gen.showPrompt ? '<pre style="white-space:pre-wrap;font:12px/1.5 ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0;max-height:260px;overflow:auto"><b>SYSTEM:</b>\n' + esc(p.system) + '\n\n<b>UŻYTKOWNIK:</b>\n' + esc(p.user) + '</pre>' : '') +
       '<button type="button" class="btn p full" data-act="grun"' + (gen.busy ? ' disabled' : '') + '>' + I.spark + 'Szukaj leadów</button>' + res +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-act="gsettings">Ustawienia agenta</button><button type="button" class="btn" data-act="addlead">← Wróć do Dodaj lead</button><button type="button" class="btn" data-act="close">Zamknij</button></div>';
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-act="addlead">← Wróć do Dodaj lead</button><button type="button" class="btn" data-act="close">Zamknij</button></div>';
   }
   var DEMO_LEADS = [
     { firma: 'Nowa stacja paliw przy S10 – Lubicz (przykład)', miasto: 'Lubicz', wojewodztwo: 'kujawsko-pomorskie', branza: 'Paliwowa', sygnal: 'Wydane pozwolenie na budowę stacji paliw z myjnią; otwarcie planowane na II kwartał 2027.', produkt: 'Pylon cenowy 8 m + oznakowanie wiaty', potencjal: 'wysoki', wartosc_szac: 120000, zrodlo_url: '' },
