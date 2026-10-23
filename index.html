@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Graffico OS</title>
+<title>GRAFFI Flow</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#0E0D0C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="icon" type="image/svg+xml" href="assets/logo-g.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Saira+Stencil+One&display=swap">
@@ -41,7 +42,7 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:600}
 
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(14,13,12,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;display:flex;align-items:center;gap:12px}
-.logo{width:36px;height:36px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-family:var(--f-num);font-size:21px;flex:none;border:0;color:#fff}
+.logo{width:44px;height:44px;border-radius:12px;background:transparent;display:grid;place-items:center;flex:none;border:0;padding:2px}.logo svg{width:100%;height:100%;display:block}
 .top .ttl{flex:1;min-width:0}
 .top .ttl b{display:block;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top .ttl span{font-size:12px;color:var(--dim);letter-spacing:.12em}
@@ -215,16 +216,26 @@ textarea.in,input.in{width:100%;border-radius:14px;background:var(--surface2);bo
 .page .dt{width:100%;border-collapse:collapse;font-size:12.5px}.page .dt th,.page .dt td{border:1px solid #333;padding:6px;vertical-align:top}.page .dt th{font-weight:700;background:#f2f2f2}.page .dt td:nth-child(3),.page .dt td:nth-child(4){text-align:center}
 .page .valid{margin-top:16px;padding:8px 12px;border-radius:6px;font:600 12px Arial,sans-serif;display:inline-block}
 .page .valid.c-green{background:#E6F7DD;color:#245c0e}.page .valid.c-orange{background:#FFF0D6;color:#7a4a00}.page .valid.c-red{background:#FFE0E0;color:#8a1010}
-select.in{appearance:auto}
+select.in{-webkit-appearance:none;appearance:none;width:100%;display:block;padding-right:38px;background-color:var(--surface2);background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 55%,calc(100% - 14px) 55%;background-size:6px 6px;background-repeat:no-repeat;color:var(--fg)}
 @media print{body>*:not(#overlay){display:none!important}body::before{display:none}body{background:#fff}.docbar{display:none!important}.docv{position:static;background:#fff;overflow:visible}.docs{padding:0;gap:0;display:block}.page{box-shadow:none;max-width:none;page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}}
+
+.datef{position:relative;display:inline-flex;align-items:center;gap:4px}
+.dtxt{width:118px!important;padding:8px 10px!important;font-size:14px!important;font-variant-numeric:tabular-nums}
+.calbtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line2);background:var(--surface2);display:grid;place-items:center;color:var(--fg)}
+.dpick{position:absolute;right:0;bottom:0;width:40px;height:40px;opacity:0;pointer-events:none}
+.filerow{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+.fic{flex:none;width:36px;height:40px;border-radius:6px;background:rgba(255,90,90,.16);color:#FF8A8A;display:grid;place-items:center;font-size:10px;font-weight:700}
+.comp{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.comp .nm{flex:1;min-width:0}.lvl{display:flex;gap:4px}.lvl button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--surface2);display:grid;place-items:center;padding:0}.lvl button i{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.14)}.lvl button.on i{background:var(--pink)}.lvl.l3 button.on i{background:var(--green)}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--pink);animation:sp 0.8s linear infinite;flex:none}@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
 
 <header class="top">
-  <button class="logo" id="homeBtn" aria-label="Start – wybór roli">G</button>
-  <div class="ttl"><b id="viewTitle">Graffico OS</b><span id="viewSub">DEMO</span></div>
+  <button class="logo" id="homeBtn" aria-label="Start – wybór roli"><svg viewBox="12 6 120 120" aria-hidden="true"><path fill="#fff" d="M21.5 59A51 51 0 0 1 98 21L90 36A34 34 0 0 0 38.7 59Z"/><path fill="#fff" d="M122.5 59A51 51 0 0 1 47 110L56 97A34 34 0 0 0 105 74H68L77 59Z"/><circle cx="37" cy="91" r="9" fill="#E3006F"/></svg></button>
+  <div class="ttl"><b id="viewTitle">GRAFFI Flow</b><span id="viewSub">DEMO</span></div>
+  <button class="iconbtn" id="gearBtn" aria-label="Ustawienia"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
   <button class="iconbtn" id="bellBtn" aria-label="Powiadomienia"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21h4"/></svg><span class="badge">5</span></button>
 </header>
 <main id="view" aria-live="polite"></main>

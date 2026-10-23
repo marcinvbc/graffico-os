@@ -21,6 +21,7 @@
     cam: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
     shield: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#88FF58" stroke-width="2" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>',
     warn: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A7A" stroke-width="2" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>',
+    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
     people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.2c3 .2 5.5 2.3 5.5 5.8"/></svg>',
     home: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
     spark: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l1.8 4.7L18 9.5l-4.2 1.8L12 16l-1.8-4.7L6 9.5l4.2-1.8z"/></svg>'
@@ -115,12 +116,13 @@
         r('monter', 'pin', 'Montażysta', 'Plan na mapie, instrukcja krok po kroku') +
         r('hala', 'tv', 'Monitor na hali', 'Priorytety, komunikaty, ranking') +
         r('kadry', 'people', 'Kadry / HR', 'Pracownicy, kompetencje, uprawnienia') +
+        r('ustawienia', 'gear', 'Administrator', 'Ustawienia: agenci AI, modele LLM, integracje') +
         '</div>' +
         '<div class="coinrow"><img src="' + COIN + '" alt=""><span>Grafficoiny – punkty za zadania wykonane w czasie. Widoczne na tablecie i monitorach hali.</span></div>' +
         '<button class="btn" data-act="reset" style="align-self:flex-start">Resetuj demo (przed kolejną prezentacją)</button>';
     },
     on: function (act) {
-      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
+      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms', 'models', 'agents'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
     }
   };
 
@@ -527,9 +529,10 @@
     var d = crm.lf, f = d.firm ? firmById(d.firm) : null;
     var firmPart = f
       ? '<div class="card" style="background:var(--surface2);display:flex;gap:12px;align-items:center"><span style="width:42px;height:42px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-weight:700;flex:none">' + esc(f.name.slice(0, 2).toUpperCase()) + '</span><span style="flex:1;min-width:0"><b>' + esc(f.name) + '</b><br><small class="t-muted">' + esc(f.branza) + ' · ' + esc(f.city) + (f.nip ? ' · NIP ' + nipFmt(f.nip) : '') + '</small></span><button type="button" class="btn" data-act="lfclear" style="min-height:40px">Zmień</button></div>'
-      : '<label class="t-muted" style="font-size:13px">Wyszukaj w katalogu kontrahentów<input id="lfQ" class="in" style="margin-top:4px" placeholder="Nazwa, NIP lub miasto" value="' + esc(d.q || '') + '" autocomplete="off"></label><div id="lfRes" class="list">' + lfResults(d.q || '') + '</div><button type="button" class="btn g full" data-act="newfirm" data-back="lead">+ Nowy kontrahent (ręcznie lub z GUS)</button>';
+      : '<label class="t-muted" style="font-size:13px">Wyszukaj w katalogu kontrahentów<input id="lfQ" class="in" style="margin-top:4px" placeholder="Nazwa, NIP lub miasto" value="' + esc(d.q || '') + '" autocomplete="off"></label><div id="lfRes" class="list">' + lfResults(d.q || '') + '</div>';
     var people = f ? f.contacts : [];
     return '<div class="grab"></div><h2>Dodaj lead</h2>' +
+      '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><button type="button" class="btn g" data-act="leadgen">' + I.spark + 'Generator leadów (AI)</button><button type="button" class="btn" data-act="newfirm" data-back="lead">+ Dodaj kontrahenta</button></div>' +
       '<div><div class="eyebrow" style="margin-bottom:6px">1. Kontrahent</div>' + firmPart + '</div>' +
       (f ? '<div><div class="eyebrow" style="margin-bottom:6px">2. Osoba kontaktowa</div><div class="seg">' + people.map(function (p, i) { return '<button type="button" data-act="lfset" data-k="person" data-v="' + i + '" aria-pressed="' + (String(d.person) === String(i)) + '">' + esc(p.name) + ' · ' + esc(p.role) + '</button>'; }).join('') + '<button type="button" data-act="lfset" data-k="person" data-v="new" aria-pressed="' + (d.person === 'new') + '">+ Nowa osoba</button></div>' + (d.person === 'new' ? '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px"><input class="in" data-lf="pname" value="' + esc(d.pname || '') + '" placeholder="Imię i nazwisko" aria-label="Imię i nazwisko"><input class="in" data-lf="prole" value="' + esc(d.prole || '') + '" placeholder="Stanowisko" aria-label="Stanowisko"></div>' : '') + '</div>' +
         '<div><div class="eyebrow" style="margin-bottom:6px">3. Czego dotyczy</div><label class="t-muted" style="font-size:13px">Temat zapytania *<input class="in" style="margin-top:4px" data-lf="title" value="' + esc(d.title || '') + '" placeholder="np. Pylon przy wejściu do przychodni"></label><div class="seg" style="margin-top:8px">' + PRODUCTS.map(function (p) { return '<button type="button" data-act="lfset" data-k="prod" data-v="' + p + '" aria-pressed="' + (d.prod === p) + '">' + p + '</button>'; }).join('') + '</div></div>' +
@@ -555,6 +558,137 @@
       rows.map(function (r) { return '<tr style="border-top:1px solid var(--line)"><td style="padding:10px 6px;width:55%"><span style="display:flex;gap:10px;align-items:center"><span style="width:34px;height:34px;border-radius:10px;background:rgba(227,0,111,.12);color:var(--pink);display:grid;place-items:center;flex:none">' + srcIcon(r[0]) + '</span><span style="flex:1;min-width:0">' + esc(r[0]) + '<span style="display:flex;gap:8px;align-items:center;margin-top:5px"><span class="bar" style="flex:1;height:6px"><i style="width:' + (r[1] / maxN * 100) + '%;background:var(--pink)"></i></span><small class="tab t-muted">' + r[1] + '</small></span></span></span></td><td style="padding:10px 6px;text-align:right"><span class="chip tab ' + (r[2] >= 30 ? 'c-green' : r[2] >= 18 ? '' : 'c-orange') + '">' + r[2] + '%</span></td><td class="tab" style="padding:10px 6px;text-align:right;white-space:nowrap">' + (r[3] ? r[3] + ' tys.' : '—') + '</td><td class="tab" style="padding:10px 6px;text-align:right">' + r[4] + '</td></tr>'; }).join('') + '</tbody></table></div>' +
       '<p class="t-dim" style="font-size:13px;margin:10px 0 0">Wnioski AI: polecenia i klienci stali dają 3× wyższą skuteczność niż formularz www. Leady z Google Ads warto kwalifikować przez AI Gate przed kalkulacją.</p></section>' +
       '<section class="card"><div class="h-row"><h2>Dodaj źródło</h2></div><form data-form="addsrc" style="display:flex;gap:8px;flex-wrap:wrap"><label for="srcIn" style="position:absolute;left:-9999px">Nazwa źródła</label><input id="srcIn" class="in" style="flex:1;min-width:200px" placeholder="np. Facebook, Oferteo, Kampania mailowa"><button class="btn p">Dodaj źródło</button></form></section>';
+  }
+
+  /* ================= USTAWIENIA: agenci AI i modele LLM + GENERATOR LEADÓW ================= */
+  var MODELS0 = [
+    { id: 'm1', name: 'Claude Opus 5.5', provider: 'Anthropic', model: 'claude-opus-5-5', endpoint: 'https://api.anthropic.com/v1/messages', key: '', note: 'najdokładniejszy – analizy, kalkulacje' },
+    { id: 'm2', name: 'Claude Sonnet 5.5', provider: 'Anthropic', model: 'claude-sonnet-5-5', endpoint: 'https://api.anthropic.com/v1/messages', key: '', note: 'domyślny – wyszukiwanie leadów' },
+    { id: 'm3', name: 'Claude Haiku 5.5', provider: 'Anthropic', model: 'claude-haiku-5-5', endpoint: 'https://api.anthropic.com/v1/messages', key: '', note: 'szybki – czat na hali, klasyfikacja' }
+  ];
+  var LEAD_PROMPT = 'Jesteś agentem wyszukiwania leadów sprzedażowych dla firmy Graffico – producenta reklamy zewnętrznej i oznakowania: pylony reklamowe i cenowe (stacje paliw), kasetony LED, litery 3D, witacze, oznakowanie centrów handlowych, sieci retail i obiektów publicznych, z własną produkcją i montażem w całej Polsce.\n\nZadanie: przeszukaj publiczne źródła w internecie (BIP i przetargi, informacje o nowych inwestycjach i pozwoleniach na budowę, otwarciach stacji paliw, sklepów, przychodni, hoteli, centrów handlowych, rebrandingach sieci, przeprowadzkach firm) i znajdź firmy lub instytucje, które w najbliższych 3–12 miesiącach mogą potrzebować oznakowania.\n\nZasady:\n- podawaj wyłącznie publicznie dostępne dane firm i instytucji, bez danych prywatnych osób;\n- każdy lead musi mieć źródło (adres URL), z którego wynika sygnał zakupowy;\n- pomijaj firmy, które już są w bazie Graffico (lista w zapytaniu);\n- nie zgaduj – jeśli brak pewności, oznacz potencjał jako niski.\n\nFormat odpowiedzi: wyłącznie JSON w bloku ```json – tablica obiektów z polami: firma, miasto, wojewodztwo, branza, sygnal (1–2 zdania), produkt (z oferty Graffico), potencjal (wysoki | średni | niski), wartosc_szac (zł netto, liczba lub null), zrodlo_url.';
+  var AGENTS0 = [
+    { id: 'leady', name: 'Agent leadów', desc: 'Przeszukuje internet i proponuje nowe szanse sprzedaży z uzasadnieniem i źródłem.', model: 'm2', temp: 0.3, max: 8, web: true, prompt: LEAD_PROMPT },
+    { id: 'kwal', name: 'AI Gate – kwalifikacja leadów', desc: 'Ocenia potencjał zapytania, porównuje z podobnymi realizacjami, sugeruje wycenę.', model: 'm2', temp: 0.2, max: 1, web: false, prompt: 'Oceniasz zapytania ofertowe dla Graffico. Na podstawie opisu zapytania i historii podobnych zleceń oceń potencjał (wysoki/średni/niski), wskaż ryzyka, brakujące informacje i widełki ceny netto. Odpowiadaj zwięźle po polsku.' },
+    { id: 'kalk', name: 'Asystent kalkulacji ofert', desc: 'Podpowiada normy czasu i marżę na podstawie zleceń historycznych.', model: 'm1', temp: 0.1, max: 1, web: false, prompt: 'Jesteś asystentem kalkulacji ofert Graffico. Na podstawie receptury produktu i danych z podobnych zleceń (czas, materiał, przekroczenia) zaproponuj normy roboczogodzin, rezerwy i minimalną marżę. Podawaj liczby i uzasadnienie.' },
+    { id: 'instr', name: 'Instrukcje stanowiskowe (czat hali)', desc: 'Odpowiada pracownikom na tabletach na pytania o technologię i BHP.', model: 'm3', temp: 0.2, max: 1, web: false, prompt: 'Odpowiadasz pracownikom produkcji Graffico na tabletach. Korzystaj wyłącznie z technologii zlecenia, instrukcji stanowiskowych i zasad BHP. Odpowiadaj krótko, konkretnie, po polsku. Gdy nie masz pewności – każ zapytać technologa.' }
+  ];
+  var MODELS = store.get('models', null) || JSON.parse(JSON.stringify(MODELS0));
+  var AGENTS = store.get('agents', null) || JSON.parse(JSON.stringify(AGENTS0));
+  function saveAI() { store.set('models', MODELS); store.set('agents', AGENTS); }
+  function modelById(id) { return MODELS.filter(function (m) { return m.id === id; })[0] || MODELS[0]; }
+  function agentById(id) { return AGENTS.filter(function (a) { return a.id === id; })[0]; }
+  var st = { tab: 'agenci', agent: 'leady', model: null, newModel: false };
+
+  VIEWS.ustawienia = {
+    title: 'Ustawienia', sub: 'ADMINISTRATOR · SYSTEM',
+    html: function () {
+      var tabs = '<div class="seg">' + [['agenci', 'Agenci AI (' + AGENTS.length + ')'], ['modele', 'Modele LLM (' + MODELS.length + ')'], ['integracje', 'Integracje']].map(function (t) { return '<button data-act="sttab" data-t="' + t[0] + '" aria-pressed="' + (st.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+      if (st.tab === 'modele') return tabs + modelsHtml();
+      if (st.tab === 'integracje') return tabs + integrHtml();
+      var a = agentById(st.agent) || AGENTS[0];
+      return tabs + '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start"><section class="card" style="flex:1 1 260px;display:grid;gap:8px"><b>Agenci</b>' + AGENTS.map(function (x) { var on = x.id === a.id; return '<button data-act="stagent" data-id="' + x.id + '" style="text-align:left;padding:12px;border-radius:12px;border:1px solid ' + (on ? 'var(--magenta)' : 'var(--line)') + ';background:' + (on ? 'rgba(227,0,111,.12)' : 'var(--surface2)') + ';color:var(--fg)"><b style="display:block">' + esc(x.name) + '</b><small class="t-muted">' + esc(modelById(x.model).name) + (x.web ? ' · wyszukiwanie w sieci' : '') + '</small></button>'; }).join('') + '</section>' +
+        '<section class="card" style="flex:999 1 480px;min-width:0;display:grid;gap:12px"><div class="h-row" style="margin:0"><h2>' + esc(a.name) + '</h2><span class="chip ' + (modelById(a.model).key ? 'c-green' : 'c-orange') + '">' + (modelById(a.model).key ? 'połączony z API' : 'tryb demo – brak klucza') + '</span></div><p class="t-muted" style="margin:0">' + esc(a.desc) + '</p>' +
+        '<form data-form="agent" data-id="' + a.id + '" class="grid" style="gap:12px"><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"><label class="t-muted" style="font-size:13px">Model<select id="agM" class="in" style="margin-top:4px">' + MODELS.map(function (m) { return '<option value="' + m.id + '"' + (m.id === a.model ? ' selected' : '') + '>' + esc(m.name) + '</option>'; }).join('') + '</select></label><label class="t-muted" style="font-size:13px">Temperatura<input id="agT" class="in" style="margin-top:4px" inputmode="decimal" value="' + a.temp + '"></label><label class="t-muted" style="font-size:13px">Maks. wyników<input id="agX" class="in" style="margin-top:4px" inputmode="numeric" value="' + a.max + '"></label></div>' +
+        '<button type="button" class="check' + (a.web ? ' on' : '') + '" data-act="agweb" data-id="' + a.id + '" aria-pressed="' + a.web + '" style="border:1px solid var(--line);border-radius:12px;padding:10px"><span class="box">' + (a.web ? '✓' : '') + '</span><span><span style="display:block">Narzędzie: wyszukiwanie w sieci</span><small class="t-dim">web_search w API Claude – agent sam wykonuje zapytania i cytuje źródła</small></span></button>' +
+        '<label class="t-muted" style="font-size:13px">Prompt systemowy (definicja agenta)<textarea id="agP" class="in" rows="14" style="margin-top:4px;font:13px/1.5 ui-monospace,Menlo,monospace">' + esc(a.prompt) + '</textarea></label>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p">Zapisz agenta</button><button type="button" class="btn" data-act="agreset" data-id="' + a.id + '">Przywróć domyślny prompt</button>' + (a.id === 'leady' ? '<button type="button" class="btn g" data-act="leadgen">Uruchom generator leadów →</button>' : '') + '</div></form></section></div>';
+    },
+    on: function (act, el) {
+      if (act === 'sttab') { st.tab = el.dataset.t; render(); }
+      if (act === 'stagent') { st.agent = el.dataset.id; render(); }
+      if (act === 'agweb') { var a = agentById(el.dataset.id); a.web = !a.web; saveAI(); render(); }
+      if (act === 'agreset') { var d = AGENTS0.filter(function (x) { return x.id === el.dataset.id; })[0]; agentById(el.dataset.id).prompt = d.prompt; saveAI(); render(); toast('Przywrócono domyślny prompt'); }
+      if (act === 'mdel') { MODELS = MODELS.filter(function (m) { return m.id !== el.dataset.id; }); saveAI(); render(); }
+      if (act === 'mnew') { st.newModel = !st.newModel; render(); }
+      if (act === 'mtest') testModel(modelById(el.dataset.id), el);
+    },
+    submit: function (f) {
+      if (f.dataset.form === 'agent') { var a = agentById(f.dataset.id); a.model = $('#agM').value; a.temp = parseFloat(String($('#agT').value).replace(',', '.')) || 0; a.max = +$('#agX').value || 5; a.prompt = $('#agP').value; saveAI(); toast('Zapisano: ' + a.name); render(); }
+      if (f.dataset.form === 'model') { var m = modelById(f.dataset.id); m.key = $('#mk-' + m.id).value.trim(); m.endpoint = $('#me-' + m.id).value.trim(); saveAI(); toast('Zapisano ustawienia modelu ' + m.name); render(); }
+      if (f.dataset.form === 'mnew') { MODELS.push({ id: 'm' + Date.now(), name: $('#mnN').value, provider: $('#mnP').value, model: $('#mnM').value, endpoint: $('#mnE').value, key: $('#mnK').value, note: '' }); st.newModel = false; saveAI(); render(); toast('Dodano model'); }
+    }
+  };
+  function modelsHtml() {
+    return '<div class="alert a-orange"><span class="chip c-orange">KLUCZE</span><span>W demo klucz API zapisuje się tylko w tej przeglądarce. W systemie docelowym klucze trzyma serwer, a aplikacja nigdy ich nie pokazuje.</span></div>' +
+      MODELS.map(function (m) { return '<section class="card"><form data-form="model" data-id="' + m.id + '" class="grid" style="gap:10px"><div class="h-row" style="margin:0;flex-wrap:wrap"><div><h2>' + esc(m.name) + '</h2><small class="t-muted">' + esc(m.provider) + ' · <span class="tab">' + esc(m.model) + '</span>' + (m.note ? ' · ' + esc(m.note) : '') + '</small></div><span class="chip ' + (m.key ? 'c-green' : 'c-orange') + '">' + (m.key ? 'klucz zapisany' : 'brak klucza') + '</span></div>' +
+        '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"><label class="t-muted" style="font-size:13px">Adres API (endpoint)<input id="me-' + m.id + '" class="in" style="margin-top:4px" value="' + esc(m.endpoint) + '"></label><label class="t-muted" style="font-size:13px">Klucz API<input id="mk-' + m.id + '" class="in" type="password" autocomplete="off" style="margin-top:4px" value="' + esc(m.key) + '" placeholder="sk-ant-…"></label></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p">Zapisz</button><button type="button" class="btn g" data-act="mtest" data-id="' + m.id + '">Testuj połączenie</button><button type="button" class="btn" data-act="mdel" data-id="' + m.id + '">Usuń</button></div></form></section>'; }).join('') +
+      (st.newModel ? '<section class="card"><form data-form="mnew" class="grid" style="gap:10px"><h2>Nowy model</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px"><label class="t-muted" style="font-size:13px">Nazwa<input id="mnN" class="in" style="margin-top:4px" required placeholder="np. Claude Sonnet 5.5 (zapasowy)"></label><label class="t-muted" style="font-size:13px">Dostawca<select id="mnP" class="in" style="margin-top:4px"><option>Anthropic</option><option>OpenAI-compatible</option><option>Azure</option><option>Lokalny (Ollama)</option></select></label><label class="t-muted" style="font-size:13px">Identyfikator modelu<input id="mnM" class="in" style="margin-top:4px" required placeholder="np. claude-sonnet-5-5"></label><label class="t-muted" style="font-size:13px">Adres API<input id="mnE" class="in" style="margin-top:4px" value="https://api.anthropic.com/v1/messages"></label><label class="t-muted" style="font-size:13px">Klucz API<input id="mnK" class="in" type="password" autocomplete="off" style="margin-top:4px"></label></div><div style="display:flex;gap:8px"><button class="btn p">Dodaj model</button><button type="button" class="btn" data-act="mnew">Anuluj</button></div></form></section>' : '<button class="btn g" data-act="mnew" style="align-self:flex-start">+ Dodaj model i API</button>');
+  }
+  function integrHtml() {
+    var row = function (n, d, s, c) { return '<div class="row" style="align-items:center"><span><b style="font-weight:500">' + n + '</b><br><small class="t-dim">' + d + '</small></span><span class="chip ' + c + '">' + s + '</span></div>'; };
+    return '<section class="card"><div class="list">' + row('Wapro Mag (iMag API)', 'stany, ceny, rezerwacje, ZAM, RW', 'do konfiguracji', 'c-orange') + row('GUS BIR (REGON)', 'dane kontrahentów po NIP – wymaga klucza z GUS', 'symulacja', 'c-orange') + row('Księgowość', 'faktury częściowe, płatności, domówienia', 'do ustalenia', '') + row('Bank (wyciągi)', 'potwierdzanie wpłat 30/40/30', 'do ustalenia', '') + row('Lokalizacja ekip (GPS)', 'obecny system – integracja lub zastąpienie', 'do ustalenia', '') + row('Formularz www / czat AI', 'zgłoszenia i leady prosto do CRM', 'gotowe w demo', 'c-green') + '</div></section>';
+  }
+
+  /* --- wywołanie modelu (prawdziwe API, gdy jest klucz) --- */
+  function callModel(m, system, user, web, maxTok) {
+    if (!m.key) return Promise.reject(new Error('Brak klucza API dla modelu ' + m.name));
+    if (m.provider !== 'Anthropic') return Promise.reject(new Error('Demo obsługuje wywołania API Anthropic'));
+    var body = { model: m.model, max_tokens: maxTok || 4000, system: system, messages: [{ role: 'user', content: user }] };
+    if (web) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 6 }];
+    return fetch(m.endpoint, { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': m.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status)); return j; }); });
+  }
+  function testModel(m, el) {
+    var t = el.textContent; el.textContent = 'Testuję…'; el.disabled = true;
+    callModel(m, 'Odpowiadaj jednym słowem.', 'Napisz: działa', false, 20).then(function (j) { toast('Połączenie OK: ' + m.name + ' odpowiada'); }).catch(function (e) { toast('Błąd: ' + e.message + (location.hostname.indexOf('claude') > -1 ? ' (w podglądzie Claude połączenia zewnętrzne są zablokowane – użyj wersji z GitHuba)' : '')); }).then(function () { el.textContent = t; el.disabled = false; });
+  }
+
+  /* --- generator leadów --- */
+  var gen = { region: 'kujawsko-pomorskie', branza: [], prod: [], mode: 'rozszerz', q: '', busy: false, res: null, err: '', cites: [], live: false, showPrompt: false };
+  var REGIONS = ['kujawsko-pomorskie', 'pomorskie', 'wielkopolskie', 'mazowieckie', 'łódzkie', 'cała Polska'];
+  function genPrompt() {
+    var a = agentById('leady');
+    var u = 'Region: ' + gen.region + '.\nBranże: ' + (gen.branza.length ? gen.branza.join(', ') : 'dowolne') + '.\nProdukty Graffico: ' + (gen.prod.length ? gen.prod.join(', ') : 'dowolne z oferty') + '.\nLiczba leadów: do ' + a.max + '.\nFirmy już w bazie (pomiń): ' + FIRMS.map(function (f) { return f.name; }).join(', ') + '.';
+    if (gen.q.trim()) u += '\n\n' + (gen.mode === 'rozszerz' ? 'DODATKOWE WSKAZÓWKI (rozszerz poszukiwania): ' : 'OGRANICZENIA (zawęź wyniki – stosuj ściśle): ') + gen.q.trim();
+    return { system: a.prompt, user: u };
+  }
+  function genSheet() {
+    var a = agentById('leady'), m = modelById(a.model), p = genPrompt();
+    var chips = function (key, arr, multi) { return '<div class="seg">' + arr.map(function (v) { var on = multi ? gen[key].indexOf(v) > -1 : gen[key] === v; return '<button type="button" data-act="gset" data-k="' + key + '" data-v="' + esc(v) + '" data-multi="' + (multi ? 1 : 0) + '" aria-pressed="' + on + '">' + v + '</button>'; }).join('') + '</div>'; };
+    var res = '';
+    if (gen.busy) res = '<div class="card" style="background:var(--surface2);display:flex;gap:12px;align-items:center"><span class="spin" aria-hidden="true"></span><span>Agent przeszukuje sieć' + (gen.live ? ' (' + esc(m.name) + ' + web_search)' : ' (tryb demo)') + '…</span></div>';
+    else if (gen.err) res = '<div class="alert a-red">' + esc(gen.err) + '</div>';
+    if (gen.res && !gen.busy) res += '<div class="h-row" style="margin:0"><b>Znalezione leady · ' + gen.res.length + '</b><span class="chip ' + (gen.live ? 'c-green' : 'c-orange') + '">' + (gen.live ? 'wyniki z internetu' : 'przykładowe wyniki – tryb demo') + '</span></div>' + gen.res.map(function (r, i) {
+      var pot = { wysoki: 'c-green', 'średni': '', niski: 'c-orange' }[r.potencjal] || '';
+      return '<div class="card" style="background:var(--surface2);display:grid;gap:6px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><b>' + esc(r.firma) + '</b><span class="chip ' + pot + '">potencjał: ' + esc(r.potencjal || '—') + '</span></div><small class="t-muted">' + esc([r.miasto, r.wojewodztwo, r.branza].filter(Boolean).join(' · ')) + '</small><span style="font-size:14px">' + esc(r.sygnal || '') + '</span><small class="t-dim">Sugerowany produkt: ' + esc(r.produkt || '—') + (r.wartosc_szac ? ' · szac. ' + zl(+r.wartosc_szac) : '') + '</small>' + (r.zrodlo_url ? '<a href="' + esc(r.zrodlo_url) + '" target="_blank" rel="noopener" style="font-size:12px;word-break:break-all">' + esc(r.zrodlo_url) + '</a>' : '') +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (r._added ? '<span class="chip c-green">dodano do lejka</span>' : '<button type="button" class="btn p" style="min-height:40px;font-size:13px" data-act="gadd" data-i="' + i + '">Dodaj jako lead</button><button type="button" class="btn" style="min-height:40px;font-size:13px" data-act="gdrop" data-i="' + i + '">Odrzuć</button>') + '</div></div>';
+    }).join('');
+    return '<div class="grab"></div><div class="h-row" style="margin:0"><h2>Generator leadów</h2><span class="chip ' + (m.key ? 'c-green' : 'c-orange') + '">' + esc(m.name) + (m.key ? '' : ' · demo') + '</span></div>' +
+      '<p class="t-muted" style="margin:0;font-size:14px">Agent leadów przeszukuje publiczne źródła (BIP, przetargi, nowe inwestycje, otwarcia obiektów) i proponuje szanse z uzasadnieniem i linkiem do źródła.</p>' +
+      '<div><small class="t-muted">Region</small>' + chips('region', REGIONS, false) + '</div><div><small class="t-muted">Branże (opcjonalnie)</small>' + chips('branza', ['Paliwowa', 'Medyczna', 'Handlowa', 'Miasta, gminy', 'Nieruchomości', 'Produkcyjna', 'Hotelarstwo'], true) + '</div><div><small class="t-muted">Produkty (opcjonalnie)</small>' + chips('prod', ['Pylon cenowy', 'Pylon', 'Litery 3D', 'Kaseton', 'Witacz', 'Oznakowanie CH'], true) + '</div>' +
+      '<div><small class="t-muted">Twoje zapytanie do agenta</small><div class="seg" style="margin:4px 0 6px"><button type="button" data-act="gset" data-k="mode" data-v="rozszerz" data-multi="0" aria-pressed="' + (gen.mode === 'rozszerz') + '">Rozszerz prompt</button><button type="button" data-act="gset" data-k="mode" data-v="zawez" data-multi="0" aria-pressed="' + (gen.mode === 'zawez') + '">Zawęź wyniki</button></div><label for="genQ" style="position:absolute;left:-9999px">Zapytanie</label><textarea id="genQ" class="in" rows="3" placeholder="' + (gen.mode === 'rozszerz' ? 'np. Szukaj też nowych przychodni i aptek otwieranych w 2027, sprawdź przetargi gmin na witacze' : 'np. Tylko inwestycje powyżej 50 tys. zł, tylko do 100 km od Torunia, bez przetargów publicznych') + '">' + esc(gen.q) + '</textarea></div>' +
+      '<button type="button" class="btn" data-act="gprompt" style="align-self:flex-start;min-height:38px;font-size:13px">' + (gen.showPrompt ? 'Ukryj' : 'Pokaż') + ' pełny prompt wysyłany do modelu</button>' + (gen.showPrompt ? '<pre style="white-space:pre-wrap;font:12px/1.5 ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0;max-height:260px;overflow:auto"><b>SYSTEM:</b>\n' + esc(p.system) + '\n\n<b>UŻYTKOWNIK:</b>\n' + esc(p.user) + '</pre>' : '') +
+      '<button type="button" class="btn p full" data-act="grun"' + (gen.busy ? ' disabled' : '') + '>' + I.spark + 'Szukaj leadów</button>' + res +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-act="gsettings">Ustawienia agenta</button><button type="button" class="btn" data-act="addlead">← Wróć do Dodaj lead</button><button type="button" class="btn" data-act="close">Zamknij</button></div>';
+  }
+  var DEMO_LEADS = [
+    { firma: 'Nowa stacja paliw przy S10 – Lubicz (przykład)', miasto: 'Lubicz', wojewodztwo: 'kujawsko-pomorskie', branza: 'Paliwowa', sygnal: 'Wydane pozwolenie na budowę stacji paliw z myjnią; otwarcie planowane na II kwartał 2027.', produkt: 'Pylon cenowy 8 m + oznakowanie wiaty', potencjal: 'wysoki', wartosc_szac: 120000, zrodlo_url: '' },
+    { firma: 'Przychodnia specjalistyczna – rozbudowa (przykład)', miasto: 'Toruń', wojewodztwo: 'kujawsko-pomorskie', branza: 'Medyczna', sygnal: 'Ogłoszony przetarg na rozbudowę budynku; w zakresie oznakowanie zewnętrzne i system informacji wizualnej.', produkt: 'Pylon informacyjny + litery 3D', potencjal: 'średni', wartosc_szac: 45000, zrodlo_url: '' },
+    { firma: 'Gmina – nowe witacze przy drogach wjazdowych (przykład)', miasto: 'Chełmża', wojewodztwo: 'kujawsko-pomorskie', branza: 'Miasta, gminy', sygnal: 'W budżecie na 2027 zapisano zadanie „witacze i tablice promocyjne”.', produkt: 'Witacze 4 szt.', potencjal: 'średni', wartosc_szac: 60000, zrodlo_url: '' },
+    { firma: 'Park handlowy – rebranding najemców (przykład)', miasto: 'Bydgoszcz', wojewodztwo: 'kujawsko-pomorskie', branza: 'Nieruchomości', sygnal: 'Komunikat zarządcy o modernizacji parku i nowych najemcach od wiosny 2027.', produkt: 'Pylon totem + kasetony LED najemców', potencjal: 'wysoki', wartosc_szac: 180000, zrodlo_url: '' },
+    { firma: 'Hotel przy autostradzie A1 – otwarcie (przykład)', miasto: 'Włocławek', wojewodztwo: 'kujawsko-pomorskie', branza: 'Hotelarstwo', sygnal: 'Inwestycja w trakcie budowy, otwarcie zapowiedziane na jesień 2027.', produkt: 'Litery 3D na elewacji + pylon przy zjeździe', potencjal: 'niski', wartosc_szac: 70000, zrodlo_url: '' }
+  ];
+  function runGen() {
+    var a = agentById('leady'), m = modelById(a.model), p = genPrompt();
+    gen.busy = true; gen.err = ''; gen.res = null; gen.live = !!m.key; reSheet(genSheet());
+    var done = function () { gen.busy = false; reSheet(genSheet()); };
+    if (!m.key) { setTimeout(function () { gen.res = DEMO_LEADS.slice(0, a.max).map(function (x) { return JSON.parse(JSON.stringify(x)); }); if (gen.mode === 'zawez' && /50/.test(gen.q)) gen.res = gen.res.filter(function (r) { return r.wartosc_szac >= 50000; }); done(); }, 1600); return; }
+    callModel(m, p.system, p.user, a.web, 6000).then(function (j) {
+      var text = (j.content || []).filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('\n');
+      var mt = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\[[\s\S]*\])/);
+      var arr = []; try { arr = JSON.parse(mt ? mt[1] : text); } catch (e) { throw new Error('Model nie zwrócił poprawnego JSON. Odpowiedź: ' + text.slice(0, 300)); }
+      gen.res = arr.slice(0, a.max); done();
+    }).catch(function (e) { gen.err = 'Nie udało się uruchomić agenta: ' + e.message + (location.hostname.indexOf('claude') > -1 ? ' W podglądzie Claude połączenia zewnętrzne są zablokowane – uruchom generator w wersji z GitHuba.' : ''); done(); });
+  }
+  function genAdd(i) {
+    var r = gen.res[i], f = FIRMS.filter(function (x) { return x.name === r.firma; })[0];
+    if (!f) { f = { id: Math.max.apply(null, FIRMS.map(function (x) { return x.id; })) + 1, name: r.firma, full: '', nip: '', regon: '', addr: '', zip: '', city: r.miasto || '', woj: r.wojewodztwo || '', branza: r.branza || '', owner: 'Agnieszka W.', source: 'Agent AI (generator leadów)', added: '24.10.2026', www: '', contacts: [] }; FIRMS.unshift(f); saveFirms(); }
+    if (SOURCES.indexOf('Agent AI (generator leadów)') < 0) { SOURCES.push('Agent AI (generator leadów)'); store.set('sources', SOURCES); }
+    var v = +r.wartosc_szac || 0;
+    LEADS.unshift({ id: 401 + LEADS.length, stage: 0, title: r.produkt || 'Lead z generatora', client: f.name, value: v ? Math.round(v / 1000) + ' tys. zł' : '—', source: 'Agent AI (generator leadów)', contact: 'brak – nowy lead', prob: '10%', close: '—', note: r.sygnal, url: r.zrodlo_url });
+    r._added = true; reSheet(genSheet()); render(); toast('Dodano lead: ' + f.name);
   }
 
   VIEWS.zlecenie = {
@@ -1188,6 +1322,14 @@
     if (act === 'printdoc') { try { window.print(); } catch (x) {} return; }
     if (act === 'addcert') { kd.add = +a.dataset.nr; showEmp(a.dataset.nr, true); var f = $('#acN'); if (f) f.focus(); return; }
     if (act === 'addcancel') { var nn = kd.add; kd.add = null; return showEmp(nn, true); }
+    if (act === 'leadgen') { openSheet(genSheet()); return; }
+    if (act === 'gset') { var gk = a.dataset.k, gv = a.dataset.v; if (a.dataset.multi === '1') { var ix = gen[gk].indexOf(gv); if (ix > -1) gen[gk].splice(ix, 1); else gen[gk].push(gv); } else gen[gk] = gv; reSheet(genSheet()); return; }
+    if (act === 'gprompt') { gen.showPrompt = !gen.showPrompt; reSheet(genSheet()); return; }
+    if (act === 'grun') { runGen(); return; }
+    if (act === 'gadd') { genAdd(+a.dataset.i); return; }
+    if (act === 'gdrop') { gen.res.splice(+a.dataset.i, 1); reSheet(genSheet()); return; }
+    if (act === 'gsettings') { st.tab = 'agenci'; st.agent = 'leady'; return go('ustawienia'); }
+    if (act === 'addlead' && cur !== 'crm') { crm.lf = { firm: null, q: '', owner: 'Agnieszka W.', src: SOURCES[0], prod: 'Pylon', person: 0 }; return openSheet(leadForm()); }
     if (act === 'cal') { var dp = a.parentNode.querySelector('.dpick'); try { if (dp.showPicker) dp.showPicker(); else { dp.focus(); dp.click(); } } catch (x) { dp.focus(); dp.click(); } return; }
     if (act === 'viewfile' || act === 'delfile') { var vx = byNr(a.dataset.nr), vc = vx.certs.filter(function (c) { return c.id === a.dataset.id; })[0], vf = (vc.files || []).filter(function (f) { return f.id === a.dataset.fid; })[0];
       if (act === 'viewfile') return viewFile(vx, vc, vf);
@@ -1222,6 +1364,7 @@
     var t = e.target;
     if (t.dataset && t.dataset.lf && crm.lf) crm.lf[t.dataset.lf] = t.value;
     if (t.dataset && t.dataset.ff && crm.ff) { crm.ff[t.dataset.ff] = t.value; if (t.dataset.ff === 'nip') { var st = $('#nipState'), n = t.value.replace(/[^\d]/g, ''); if (st) st.innerHTML = n.length < 10 ? '' : nipOk(n) ? '<small class="t-green">NIP poprawny – możesz pobrać dane z GUS</small>' : '<small class="t-red">Nieprawidłowy NIP – sprawdź cyfry</small>'; } }
+    if (t.id === 'genQ') gen.q = t.value;
     if (t.id === 'lfQ' && crm.lf) { crm.lf.q = t.value; var r = $('#lfRes'); if (r) r.innerHTML = lfResults(t.value); }
     if (t.id === 'fq') { crm.fq = t.value; var fl = $('#firmList'); if (fl) { var q = t.value.toLowerCase(); fl.innerHTML = firmRows(FIRMS.filter(function (f) { return !q || (f.name + ' ' + f.full + ' ' + f.nip + ' ' + f.city + ' ' + f.branza).toLowerCase().indexOf(q) > -1; })); } }
   });
@@ -1255,6 +1398,7 @@
     if (VIEWS[cur].submit) VIEWS[cur].submit(f);
   });
   $('#homeBtn').addEventListener('click', function () { go('start'); });
+  var gb = $('#gearBtn'); if (gb) gb.addEventListener('click', function () { go('ustawienia'); });
   $('#bellBtn').addEventListener('click', function () { openSheet('<div class="grab"></div><h2>Powiadomienia</h2><div class="grid">' + allAlerts().map(function (a) { return '<div class="alert ' + a[0] + '"><span class="chip ' + a[1] + '">' + a[2] + '</span><span>' + a[3] + '</span></div>'; }).join('') + '</div>' + (events.length ? '<h2 style="font-size:17px;margin-top:6px">Ostatnie zdarzenia</h2>' + eventsHtml(6) : '') + '<button class="btn full" data-act="close">Zamknij</button>'); });
   function bell() { var b = $('#bellBtn .badge'); if (b) b.textContent = allAlerts().length; }
   setInterval(function () { var V = VIEWS[cur]; if (V.tick) V.tick(); }, 500);
