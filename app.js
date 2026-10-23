@@ -8,6 +8,7 @@
     get: function (k, d) { try { var v = localStorage.getItem('gos.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
     set: function (k, v) { try { localStorage.setItem('gos.' + k, JSON.stringify(v)); } catch (e) {} }
   };
+  var LOGO = '<svg viewBox="12 6 120 120" aria-hidden="true"><path fill="#fff" d="M21.5 59A51 51 0 0 1 98 21L90 36A34 34 0 0 0 38.7 59Z"/><path fill="#fff" d="M122.5 59A51 51 0 0 1 47 110L56 97A34 34 0 0 0 105 74H68L77 59Z"/><circle cx="37" cy="91" r="9" fill="#E3006F"/></svg>';
   var COIN = 'assets/grafficoin-96.png', COIN_BIG = 'assets/grafficoin.png', MAP = 'assets/mapa-polski.webp';
   var I = {
     grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>',
@@ -20,6 +21,7 @@
     cam: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
     shield: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#88FF58" stroke-width="2" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>',
     warn: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A7A" stroke-width="2" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>',
+    people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.2c3 .2 5.5 2.3 5.5 5.8"/></svg>',
     home: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
     spark: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l1.8 4.7L18 9.5l-4.2 1.8L12 16l-1.8-4.7L6 9.5l4.2-1.8z"/></svg>'
   };
@@ -50,7 +52,7 @@
     ['a-orange', 'c-orange', 'PLAN', 'Wtorek: konflikt na frezarce CNC (2169 i 2090). <a href="#plan" data-go="plan">Zobacz propozycje AI</a>'],
     ['a-orange', 'c-orange', 'LUDZIE', 'P2 poniedziałek: brakuje spawacza. System proponuje Artura K. (spawanie + malowanie).'],
     ['a-green', 'c-green', 'FV', 'Zlecenie 2129 przekroczyło 60% – wystaw fakturę częściową II (40%).'],
-    ['', '', 'BHP', '3 montażystom wygasają uprawnienia do pracy na wysokości (do 14.11).']
+    ['', '', 'BHP', 'Montażystom wygasają uprawnienia (praca na wysokości, UDT) w ciągu 30 dni. <a href="#kadry" data-go="kadry">Zobacz w module Pracownicy</a>']
   ];
   var TASKS = [
     ['Oddzwoń do AMIC – akceptacja wizualizacji', 'CRM · ostatni kontakt 4 dni temu'],
@@ -100,10 +102,10 @@
   var VIEWS = {};
 
   VIEWS.start = {
-    title: 'Graffico OS', sub: 'DEMO · WYBIERZ ROLĘ',
+    title: 'GRAFFI Flow', sub: 'DEMO · WYBIERZ ROLĘ',
     html: function () {
       var r = function (go, ic, t, s) { return '<button class="role" data-go="' + go + '"><span class="ic">' + I[ic].replace('<svg', '<svg width="24" height="24"') + '</span><span><b>' + t + '</b><span>' + s + '</span></span></button>'; };
-      return '<section class="hero"><span class="eyebrow">System zarządzania firmą · prototyp</span><h1>Jeden system od zapytania do protokołu odbioru</h1><p class="t-muted" style="margin:0;max-width:60ch">Wybierz, kim jesteś. Każda rola widzi swoje ekrany. Dane w demo są przykładowe.</p></section>' +
+      return '<section class="hero"><span class="eyebrow">System zarządzania firmą · prototyp</span><span style="display:block;width:clamp(64px,16vw,96px);margin:4px 0 6px">' + LOGO + '</span><h1 style="font-size:clamp(40px,12vw,72px);font-weight:700;letter-spacing:.04em;line-height:1">GRAFFI <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">FLOW</span></h1><p class="t-muted" style="margin:0;max-width:60ch">Wybierz, kim jesteś. Każda rola widzi swoje ekrany. Dane w demo są przykładowe.</p></section>' +
         '<div class="roles">' +
         r('pulpit', 'grid', 'Zarząd', 'Pulpit: zadania, alerty, wynik zleceń') +
         r('crm', 'crm', 'Handlowiec', 'Lejek sprzedaży, AI Gate, follow-upy') +
@@ -112,12 +114,13 @@
         r('tablet', 'tab', 'Pracownik produkcji', 'Tablet: PIN, maszyna, czas, model 3D') +
         r('monter', 'pin', 'Montażysta', 'Plan na mapie, instrukcja krok po kroku') +
         r('hala', 'tv', 'Monitor na hali', 'Priorytety, komunikaty, ranking') +
+        r('kadry', 'people', 'Kadry / HR', 'Pracownicy, kompetencje, uprawnienia') +
         '</div>' +
         '<div class="coinrow"><img src="' + COIN + '" alt=""><span>Grafficoiny – punkty za zadania wykonane w czasie. Widoczne na tablecie i monitorach hali.</span></div>' +
         '<button class="btn" data-act="reset" style="align-self:flex-start">Resetuj demo (przed kolejną prezentacją)</button>';
     },
     on: function (act) {
-      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
+      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
     }
   };
 
@@ -163,7 +166,9 @@
     }
   };
   function allAlerts() {
-    return closed ? [['a-green', 'c-green', 'FV', 'Zlecenie <a href="#zlecenie" data-act="history">2155</a> zamknięte, protokół podpisany – wystaw fakturę III (30%): 20 520 zł.']].concat(ALERTS) : ALERTS;
+    var bx = (typeof EMPX !== 'undefined') ? EMPX.filter(function (x) { return expiredBad(x).length; }) : [];
+    var extra = bx.length ? [['a-red', 'c-red', 'BADANIA', 'Nieaktualne badania lekarskie: ' + bx.map(function (x) { return '<a href="#kadry" data-act="emp" data-nr="' + x.nr + '">' + x.name + '</a>'; }).join(', ') + ' – nie wolno dopuścić do pracy.']] : [];
+    return extra.concat(closed ? [['a-green', 'c-green', 'FV', 'Zlecenie <a href="#zlecenie" data-act="history">2155</a> zamknięte, protokół podpisany – wystaw fakturę III (30%): 20 520 zł.']].concat(ALERTS) : ALERTS);
   }
 
   VIEWS.crm = {
@@ -243,7 +248,7 @@
           [['ot', 'Nadgodziny +2 h (Kacper K.)', '≈ 140 zł', 'Wtorek do 18:00, Kacper ma kompetencję CNC.'], ['sat', 'Sobota – 2090 na frezarce', '≈ 420 zł', 'Termin 2090: 06.11, zapas 4 dni.'], ['move', 'Przesuń 2090 na środę', '0 zł', 'Szlif 2161 przesuwa się o 4 h, termin bezpieczny.']].map(function (o) { return '<button class="opt" data-act="fix" data-f="' + o[0] + '"><span style="display:flex;justify-content:space-between;gap:8px"><b>' + o[1] + '</b><span class="t-green">' + o[2] + '</span></span><small class="t-muted">' + o[3] + '</small></button>'; }).join('') + '</div>') + '</section>' +
         '<section class="card"><div class="h-row"><h2>Gniazda · 26–31.10</h2><small class="t-dim">przesuń w bok</small></div><div class="scroll-x"><div class="gantt"><div class="g-head"><span>Gniazdo</span><span class="g-days"><span>Pn 26</span><span>Wt 27</span><span>Śr 28</span><span>Czw 29</span><span>Pt 30</span><span class="' + (f === 'sat' ? 't-green' : '') + '">Sob 31</span></span></div>' +
         R.map(function (r) { var bad = r[1].indexOf('konflikt') > -1; return '<div class="g-row"' + (bad ? ' style="background:rgba(255,90,90,.05)"' : '') + '><span><b>' + r[0] + '</b><small class="' + (bad ? 't-red' : 't-dim') + '">' + r[1] + '</small></span><span class="g-track">' + r[2].join('') + '</span></div>'; }).join('') + '</div></div></section>' +
-        '<section class="card"><div class="h-row"><h2>Ludzie · poniedziałek</h2><small class="t-orange">brak 1 spawacza</small></div><div class="grid g2">' +
+        '<section class="card"><div class="h-row"><h2>Pracownicy · poniedziałek</h2><a href="#kadry" data-go="kadry" style="font-size:13px">Wszyscy pracownicy →</a></div><p class="t-orange" style="margin:0 0 10px;font-size:13px">Brak 1 spawacza – zastępstwo z macierzy kompetencji: Artur K.</p><div class="grid g2">' +
         [['Artur K.', '8 / 8 h', ['spawanie', 'malowanie', 'CNC']], ['Kacper K.', '10 / 8 h', ['CNC', 'pliki']], ['Damian B.', '6 / 8 h', ['frezowanie', 'gięcie']], ['Stanisław O.', '8 / 8 h', ['składanie', 'elektryka']]].map(function (p) { return '<div><div style="display:flex;justify-content:space-between"><span>' + p[0] + '</span><span class="tab ' + (p[1].indexOf('10') === 0 ? 't-orange' : 't-muted') + '">' + p[1] + '</span></div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">' + p[2].map(function (k) { return '<span class="chip">' + k + '</span>'; }).join('') + '</div></div>'; }).join('') + '</div></section>';
     },
     on: function (act, el) { if (act === 'fix') { ui.fix = el.dataset.f; render(); toast('Plan zaktualizowany'); } if (act === 'unfix') { ui.fix = null; render(); } }
@@ -485,8 +490,320 @@
     tick: function () { var d = new Date(), el = $('#tvclock'); if (el) el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()); }
   };
 
+  /* ---------- PRACOWNICY (dane z ekranu „Pracownicy” starego systemu) ---------- */
+  // [nr, imię i inicjał, stanowisko, hale, stawka zł/h, dzień wypłaty, pracuje od]
+  // hale: S = [BR] Produkcja Stara, G = Hala Góra, D = Hala Dół, M = Montażyści, A = Administracja
+  var EMP = [
+    [1, 'Bartosz B.', 'niezdefiniowane', 'D', 15, 10, ''], [2, 'Marek M.', 'niezdefiniowane', 'S', 15, 10, ''],
+    [93, 'Mariusz W.', 'montażysta brygadzista', 'M', 15, 1, '2018-03-01'], [149, 'Damian Bo.', 'pracownik produkcji', 'S', 15, 10, '2019-05-13'],
+    [58, 'Przemysław L.', 'pracownik produkcji', 'S', 15, 10, '2017-09-02'], [89, 'Jarosław B.', 'pracownik produkcji', 'G', 15, 10, '2018-01-25'],
+    [168, 'Zbigniew Ch.', 'pracownik produkcji', 'D', 20, 10, '2019-12-03'], [106, 'Adam N.', 'pracownik produkcji', 'G', 15, 10, '2018-12-01'],
+    [62, 'Wiesława K.', 'sprzątaczka', 'S', 14, 10, '2017-09-09'], [6, 'Dariusz P.', 'montażysta brygadzista', 'M', 15, 1, ''],
+    [94, 'Zbigniew Ś.', 'pracownik produkcji', 'G', 15, 10, '2018-05-10'], [8, 'Tomasz R.', 'niezdefiniowane', 'AS', 15, 10, ''],
+    [144, 'Agnieszka Gr.', 'pracownik produkcji', 'G', 15, 10, '2019-05-13'], [113, 'Wojciech T.', 'pracownik produkcji', 'G', 15, 10, '2018-12-14'],
+    [90, 'Oleksandr H.', 'ślusarz', 'D', 15, 10, '2018-02-26'], [136, 'Tadeusz J.', 'pracownik produkcji', 'G', 15, 10, '2019-03-11'],
+    [9, 'Krzysztof So.', 'montażysta', 'GM', 15, 1, ''], [112, 'Stanisław Os.', 'montażysta', 'M', 15, 1, '2018-12-14'],
+    [68, 'Marek P.', 'pracownik produkcji', 'S', 15, 10, '2017-10-24'], [151, 'Kacper Ka.', 'pracownik produkcji', 'S', 15, 10, '2019-05-13'],
+    [117, 'Paweł Z.', 'pracownik produkcji', 'D', 15, 10, '2018-12-20'], [139, 'Artur K.', 'pracownik produkcji', 'S', 15, 10, '2019-03-11'],
+    [10, 'Dawid M.', 'niezdefiniowane', 'D', 15, 10, ''], [123, 'Krystian L.', 'montażysta', 'M', 15, 1, '2019-02-12'],
+    [140, 'Michał D.', 'montażysta', 'M', 15, 1, '2019-03-19'], [88, 'Zbigniew W.', 'montażysta', 'M', 15, 1, '2018-01-17']
+  ];
+  var HALL = { S: '[BR] Produkcja Stara', G: 'Hala Góra', D: 'Hala Dół', M: 'Montażyści', A: 'Administracja' };
+  var SKILLS = ['Spawanie MIG/MAG', 'Spawanie TIG', 'Obsługa CNC', 'Gilotyna / prasa', 'Szlifowanie', 'Malowanie', 'Elektryka LED', 'Składanie', 'Praca na wysokości', 'Podnośnik / UDT', 'Wózek widłowy', 'Prawo jazdy C'];
+  var customSkills = store.get('skills', []); customSkills.forEach(function (k) { if (SKILLS.indexOf(k) < 0) SKILLS.push(k); });
+  var TYPES = { bad: 'Badania lekarskie', szk: 'Szkolenia', upr: 'Uprawnienia' };
+  var PRESETS = {
+    bad: ['Badania okresowe (medycyna pracy)', 'Badania do pracy na wysokości powyżej 3 m', 'Badania kierowcy (art. 39j ustawy o transporcie)', 'Badania kontrolne po L4 (powyżej 30 dni)'],
+    szk: ['Szkolenie okresowe BHP – stanowiska robotnicze', 'Szkolenie wstępne BHP (instruktaż ogólny i stanowiskowy)', 'Pierwsza pomoc przedmedyczna', 'Szkolenie przeciwpożarowe', 'Bezpieczna praca na wysokości – szkolenie praktyczne'],
+    upr: ['Praca na wysokości (szelki, linie asekuracyjne)', 'UDT – podesty ruchome przejezdne (IP)', 'UDT – żurawie przenośne / HDS', 'UDT – wózki jezdniowe podnośnikowe', 'SEP E – eksploatacja do 1 kV', 'SEP D – dozór do 1 kV', 'Spawacz MAG 135 (PN-EN ISO 9606-1)', 'Spawacz TIG 141 (PN-EN ISO 9606-1)', 'Prawo jazdy kat. C + kwalifikacja wstępna']
+  };
+  var SIZES = [['kurtka', 'Kurtka / bluza', ['S', 'M', 'L', 'XL', '2XL', '3XL']], ['spodnie', 'Spodnie (rozmiar)', ['46', '48', '50', '52', '54', '56', '58', '60']], ['wzrost', 'Wzrost (cm)', ['164', '170', '176', '182', '188', '194']], ['koszulka', 'Koszulka / polo', ['S', 'M', 'L', 'XL', '2XL', '3XL']], ['buty', 'Buty S3 (EU)', ['39', '40', '41', '42', '43', '44', '45', '46', '47']], ['rekawice', 'Rękawice', ['7', '8', '9', '10', '11']], ['kamizelka', 'Kamizelka odblaskowa', ['M', 'L', 'XL', '2XL']]];
+  var TODAY = new Date(2026, 9, 23);
+  var kd = { hall: 'all', q: '', view: 'list', sel: null, add: null };
+  function seed(n, k) { var x = Math.sin(n * 97 + k * 13) * 10000; return x - Math.floor(x); }
+  function iso(y, m, d) { return y + '-' + pad(m) + '-' + pad(d); }
+  function plDate(s) { if (!s) return ''; var p = s.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
+  function addYears(s, n) { var p = s.split('-'); return iso(+p[0] + n, +p[1], +p[2]); }
+  function genCerts(nr, st, lv) {
+    var mont = st.indexOf('montaż') > -1, c = [], id = 0;
+    var mk = function (t, name, from, to, no, issuer) { c.push({ id: nr + '-' + (id++), t: t, name: name, from: from, to: to, nr: no || '', issuer: issuer || '' }); };
+    var bFrom = iso(2025, 1 + Math.floor(seed(nr, 3) * 11), 1 + Math.floor(seed(nr, 4) * 27));
+    if (nr === 139) bFrom = '2024-11-14';
+    mk('bad', PRESETS.bad[0], bFrom, addYears(bFrom, 2), 'orzeczenie nr ' + (100 + nr) + '/MP/' + bFrom.slice(0, 4), 'Przychodnia Medycyny Pracy (przykład)');
+    if (mont) { var w = iso(2025, 1 + Math.floor(seed(nr, 7) * 11), 3 + Math.floor(seed(nr, 8) * 20)); if (seed(nr, 7) < .45) w = '2025-11-14'; mk('bad', PRESETS.bad[1], w, addYears(w, 1), '', 'Przychodnia Medycyny Pracy (przykład)'); }
+    if (mont && lv[11]) mk('bad', PRESETS.bad[2], '2023-06-12', '2028-06-12');
+    var sFrom = iso(2024, 1 + Math.floor(seed(nr, 5) * 11), 2 + Math.floor(seed(nr, 6) * 25));
+    mk('szk', PRESETS.szk[0], sFrom, addYears(sFrom, mont ? 1 : 3), 'BHP/' + sFrom.slice(0, 4) + '/' + (300 + nr), 'Ośrodek Szkoleń BHP (przykład)');
+    mk('szk', PRESETS.szk[1], '', '', '', 'Graffico – służba BHP');
+    if (seed(nr, 15) > .5 || mont) mk('szk', PRESETS.szk[2], '2025-04-10', '2028-04-10', 'PP/2025/' + nr, 'Ośrodek Szkoleń BHP (przykład)');
+    if (mont) mk('upr', PRESETS.upr[0], '2024-11-20', seed(nr, 7) < .45 ? '2026-11-14' : '2027-11-20', 'WYS/' + nr, 'Ośrodek Szkoleń BHP (przykład)');
+    if (lv[9]) mk('upr', PRESETS.upr[1], '2021-11-02', seed(nr, 9) < .2 ? '2026-11-02' : '2031-11-02', 'IP/' + (4000 + nr), 'Urząd Dozoru Technicznego');
+    if (lv[9]) c[c.length - 1].files = [{ id: 'demo-' + nr, name: 'Zaswiadczenie-UDT-IP-przyklad.pdf', size: 41000, at: '02.11.2021', url: 'assets/przyklad-udt.pdf' }];
+    if (lv[6] >= 2) mk('upr', PRESETS.upr[4], '2021-11-28', seed(nr, 10) < .3 ? '2026-11-28' : '2029-05-10', 'E/' + (700 + nr) + '/21', 'Komisja kwalifikacyjna SEP');
+    if (mont && lv[6] >= 2 && seed(nr, 16) > .5) mk('upr', PRESETS.upr[5], '2022-03-15', '2027-03-15', 'D/' + (200 + nr) + '/22', 'Komisja kwalifikacyjna SEP');
+    if (lv[0] >= 2) mk('upr', PRESETS.upr[6], '2024-06-30', '2027-06-30', 'MAG-' + nr, 'Instytut Spawalnictwa (przykład)');
+    if (lv[1] >= 2) mk('upr', PRESETS.upr[7], '2025-02-10', '2028-02-10', 'TIG-' + nr, 'Instytut Spawalnictwa (przykład)');
+    if (lv[10] >= 1) mk('upr', PRESETS.upr[3], '2019-03-01', '2029-03-01', 'WJO/' + (900 + nr), 'Urząd Dozoru Technicznego');
+    if (lv[11] >= 2) mk('upr', PRESETS.upr[8], '2016-05-20', '2031-05-20', '', 'Starostwo Powiatowe');
+    return c;
+  }
+  function genSizes(nr) { var p = function (arr, k) { return arr[Math.min(arr.length - 1, Math.floor(seed(nr, k) * arr.length))]; }; var o = {}; SIZES.forEach(function (s, i) { o[s[0]] = p(s[2].slice(1, -1), 20 + i); }); return o; }
+  var empStore = store.get('empdata', {});
+  function saveEmp(x) { empStore[x.nr] = { certs: x.certs, sizes: x.sizes, lv: x.lv }; store.set('empdata', empStore); }
+  function empX(e) {
+    var nr = e[0], st = e[2], mont = st.indexOf('montaż') > -1, prod = st === 'pracownik produkcji' || st === 'ślusarz';
+    var lv = SKILLS.map(function (s, k) {
+      if (k >= 12) return 0; var base = mont ? [1, 0, 0, 0, 1, 0, 2, 2, 3, 2, 1, 2][k] : prod ? [2, 1, 1, 2, 2, 2, 1, 2, 0, 0, 1, 0][k] : 0;
+      var r = seed(nr, k); var v = base === 0 ? (r > .85 ? 1 : 0) : Math.max(1, Math.min(3, base + (r > .7 ? 1 : r < .2 ? -1 : 0)));
+      if (nr === 139 && (k === 0 || k === 5 || k === 2)) v = 3; if (nr === 149 && (k === 2 || k === 3)) v = 3; if (nr === 151 && k === 2) v = 3;
+      return st === 'sprzątaczka' ? (k === 10 ? 1 : 0) : v;
+    });
+    if ((empStore[nr] || {}).lv) lv = empStore[nr].lv.slice(); while (lv.length < SKILLS.length) lv.push(0);
+    var r = seed(nr, 99), status = r < .1 ? 'urlop' : (mont && r < .55 ? 'delegacja' : (r > .95 ? 'L4' : 'obecny'));
+    var saved = empStore[nr] || {};
+    var by = 1965 + Math.floor(seed(nr, 30) * 36), bm = 1 + Math.floor(seed(nr, 31) * 12), bd = 1 + Math.floor(seed(nr, 32) * 28);
+    var pesel = String(by).slice(2) + pad(bm) + pad(bd) + String(1000 + Math.floor(seed(nr, 33) * 8999)).slice(0, 4);
+    var wg = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3], sum = 0; for (var i = 0; i < 10; i++) sum += wg[i] * +pesel[i]; pesel += (10 - sum % 10) % 10;
+    var towns = ['87-100 Toruń', '87-140 Chełmża', '87-162 Lubicz', '87-148 Łysomice', '87-134 Zławieś Wielka'];
+    return { nr: nr, name: e[1], st: st, halls: e[3].split(''), rate: e[4], pay: e[5], since: e[6], mont: mont, lv: lv, status: status,
+      skillsN: lv.filter(function (v) { return v > 0; }).length,
+      certs: saved.certs || genCerts(nr, st, lv), sizes: saved.sizes || genSizes(nr),
+      dob: iso(by, bm, bd), pesel: pesel, addr: 'ul. Przykładowa ' + (2 + Math.floor(seed(nr, 34) * 60)) + ', ' + towns[Math.floor(seed(nr, 35) * towns.length)],
+      coins: st === 'niezdefiniowane' || st === 'sprzątaczka' ? 0 : 400 + Math.floor(seed(nr, 11) * 850), eff: 78 + Math.floor(seed(nr, 12) * 24), ot: Math.floor(seed(nr, 13) * 22), leave: 4 + Math.floor(seed(nr, 14) * 18) };
+  }
+  var EMPX = EMP.map(empX);
+  function byNr(nr) { return EMPX.filter(function (x) { return x.nr === +nr; })[0]; }
+  function certState(c) {
+    if (!c.to) return ['c-green', 'bezterminowo', 2];
+    var p = c.to.split('-'), days = Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - TODAY) / 864e5);
+    return days < 0 ? ['c-red', 'nieaktualne od ' + (-days) + ' dni', 0] : days < 31 ? ['c-orange', 'wygasa za ' + days + ' dni', 1] : ['c-green', 'ważne', 2];
+  }
+  function problems(x) { return x.certs.filter(function (c) { return certState(c)[2] < 2; }); }
+  function expiredBad(x) { return x.certs.filter(function (c) { return c.t === 'bad' && certState(c)[2] === 0; }); }
+  function expiring() { var n = 0; EMPX.forEach(function (x) { n += problems(x).length; }); return n; }
+  function dots(v) { return '<span aria-label="poziom ' + v + ' z 3" style="display:inline-flex;gap:3px">' + [1, 2, 3].map(function (i) { return '<i style="width:9px;height:9px;border-radius:50%;background:' + (i <= v ? (v === 3 ? 'var(--green)' : 'var(--pink)') : 'rgba(255,255,255,.12)') + '"></i>'; }).join('') + '</span>'; }
+  function ini(n) { return n.split(' ').map(function (p) { return p[0]; }).join(''); }
+  var STC = { obecny: 'c-green', urlop: 'c-orange', delegacja: 'c-pink', L4: 'c-red' };
+
+  VIEWS.kadry = {
+    title: 'Pracownicy', sub: 'KADRY · 49 AKTYWNYCH',
+    html: function () {
+      var list = EMPX.filter(function (x) { return (kd.hall === 'all' || x.halls.indexOf(kd.hall) > -1) && (!kd.q || (x.name + ' ' + x.nr + ' ' + x.st).toLowerCase().indexOf(kd.q.toLowerCase()) > -1); });
+      var cnt = function (h) { return EMPX.filter(function (x) { return x.halls.indexOf(h) > -1; }).length; };
+      var pres = EMPX.filter(function (x) { return x.status === 'obecny'; }).length, del = EMPX.filter(function (x) { return x.status === 'delegacja'; }).length;
+      var badX = EMPX.filter(function (x) { return expiredBad(x).length; });
+      var head = (badX.length ? '<div class="alert a-red"><span class="chip c-red">BADANIA</span><span>Nieaktualne badania lekarskie: ' + badX.map(function (x) { return '<a href="#kadry" data-act="emp" data-nr="' + x.nr + '">' + x.name + '</a>'; }).join(', ') + '. Tych osób nie wolno dopuścić do pracy – wygeneruj skierowanie.</span></div>' : '') +
+        '<div class="kpis"><div class="kpi"><small>Aktywni pracownicy</small><b>49</b><em class="t-dim">w demo ' + EMPX.length + ' ze starego systemu</em></div><div class="kpi"><small>Dziś obecni</small><b>' + pres + '</b><em class="t-dim">z ' + EMPX.length + ' na liście</em></div><div class="kpi"><small>W delegacji</small><b>' + del + '</b><em class="t-pink">ekipy montażowe</em></div><div class="kpi" style="border-color:rgba(255,153,0,.4)"><small class="t-orange">Terminy do pilnowania</small><b>' + expiring() + '</b><em class="t-dim">nieaktualne lub do 30 dni</em></div><div class="kpi"><small>Bez stanowiska</small><b>' + EMPX.filter(function (x) { return x.st === 'niezdefiniowane'; }).length + '</b><em class="t-orange">uzupełnij w kartach</em></div></div>';
+      var seg = '<div class="seg">' + [['all', 'Wszyscy'], ['S', 'Prod. Stara · ' + cnt('S')], ['G', 'Hala Góra · ' + cnt('G')], ['D', 'Hala Dół · ' + cnt('D')], ['M', 'Montażyści · ' + cnt('M')], ['A', 'Administracja · ' + cnt('A')]].map(function (f) { return '<button data-act="khall" data-h="' + f[0] + '" aria-pressed="' + (kd.hall === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>';
+      var tabs = '<div class="seg">' + [['list', 'Lista'], ['matrix', 'Macierz kompetencji'], ['certs', 'Badania, szkolenia, uprawnienia'], ['sizes', 'Rozmiary odzieży']].map(function (t) { return '<button data-act="kview" data-v="' + t[0] + '" aria-pressed="' + (kd.view === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+      var body;
+      if (kd.view === 'matrix') {
+        body = '<section class="card"><div class="h-row"><h2>Kto co umie</h2><small class="t-dim">● podstawy ●● samodzielnie ●●● ekspert</small></div><div class="scroll-x"><table style="border-collapse:collapse;font-size:13px;min-width:1000px;width:100%"><thead><tr><th scope="col" style="text-align:left;padding:8px;position:sticky;left:0;background:var(--surface)">Pracownik</th>' + SKILLS.map(function (s) { return '<th scope="col" style="padding:8px 6px;font-weight:500;color:var(--muted);font-size:11px;text-align:center;max-width:80px">' + s + '</th>'; }).join('') + '</tr></thead><tbody>' +
+          list.filter(function (x) { return x.skillsN > 0; }).map(function (x) { return '<tr style="border-top:1px solid var(--line)"><th scope="row" style="text-align:left;padding:8px;font-weight:500;white-space:nowrap;position:sticky;left:0;background:var(--surface)"><button data-act="emp" data-nr="' + x.nr + '" style="background:none;border:0;padding:0;color:var(--fg);text-align:left">' + x.name + '<br><small class="t-dim">' + x.st + '</small></button></th>' + x.lv.map(function (v) { return '<td style="text-align:center;padding:6px">' + (v ? dots(v) : '<span class="t-dim">–</span>') + '</td>'; }).join('') + '</tr>'; }).join('') +
+          '</tbody></table></div><p class="t-dim" style="font-size:13px;margin:10px 0 0">Planowanie produkcji korzysta z tej tabeli: gdy brakuje spawacza, system proponuje osobę z kompetencją ●● lub ●●●.</p></section>';
+      } else if (kd.view === 'certs') {
+        var rows = []; list.forEach(function (x) { x.certs.forEach(function (c) { var s = certState(c); rows.push([s[2], x, c, s]); }); });
+        rows.sort(function (a, b) { return a[0] - b[0] || (a[2].to || '9').localeCompare(b[2].to || '9'); });
+        body = '<section class="card"><div class="h-row"><h2>Terminy – najpilniejsze na górze</h2><small class="t-dim">' + rows.length + ' pozycji</small></div><div class="list">' + rows.map(function (r) { return '<button class="row" data-act="emp" data-nr="' + r[1].nr + '" style="background:none;border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;color:var(--fg);align-items:center"><span style="min-width:0"><small class="t-dim">' + TYPES[r[2].t] + '</small><br><b style="font-weight:500">' + r[2].name + '</b><br><small class="t-muted">' + r[1].name + ' · ' + r[1].st + '</small></span><span style="text-align:right;flex:none"><span class="chip ' + r[3][0] + '">' + r[3][1] + '</span><br><small class="t-dim tab">' + (r[2].to ? 'do ' + plDate(r[2].to) : '') + '</small></span></button>'; }).join('') + '</div></section>';
+      } else if (kd.view === 'sizes') {
+        var tot = {}; SIZES.forEach(function (s) { tot[s[0]] = {}; });
+        list.forEach(function (x) { SIZES.forEach(function (s) { var v = x.sizes[s[0]]; tot[s[0]][v] = (tot[s[0]][v] || 0) + 1; }); });
+        body = '<section class="card"><div class="h-row"><h2>Zestawienie do zamówienia</h2><small class="t-dim">' + list.length + ' osób</small></div><div class="grid g2">' + SIZES.filter(function (s) { return s[0] !== 'wzrost'; }).map(function (s) { return '<div><b style="font-size:14px">' + s[1] + '</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + s[2].filter(function (v) { return tot[s[0]][v]; }).map(function (v) { return '<span class="chip tab">' + v + ' × ' + tot[s[0]][v] + '</span>'; }).join('') + '</div></div>'; }).join('') + '</div></section>' +
+          '<section class="card"><div class="h-row"><h2>Tabela rozmiarów</h2><small class="t-dim">dotknij osoby, aby zmienić</small></div><div class="scroll-x"><table style="border-collapse:collapse;font-size:13px;min-width:720px;width:100%"><thead><tr><th scope="col" style="text-align:left;padding:8px;position:sticky;left:0;background:var(--surface)">Pracownik</th>' + SIZES.map(function (s) { return '<th scope="col" style="padding:8px;font-weight:500;color:var(--muted);font-size:12px">' + s[1] + '</th>'; }).join('') + '</tr></thead><tbody>' +
+          list.map(function (x) { return '<tr style="border-top:1px solid var(--line)"><th scope="row" style="text-align:left;padding:8px;font-weight:500;white-space:nowrap;position:sticky;left:0;background:var(--surface)"><button data-act="emp" data-nr="' + x.nr + '" data-sec="sizes" style="background:none;border:0;padding:0;color:var(--fg)">' + x.name + '</button></th>' + SIZES.map(function (s) { return '<td class="tab" style="text-align:center;padding:8px">' + x.sizes[s[0]] + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></section>';
+      } else {
+        body = '<section class="card"><div class="h-row"><h2>' + list.length + ' na liście</h2><label for="kq" style="position:absolute;left:-9999px">Szukaj pracownika</label><input id="kq" class="in" style="max-width:240px;padding:8px 12px" placeholder="Szukaj: imię, nr, stanowisko" value="' + esc(kd.q) + '"></div><div class="list">' +
+          list.map(function (x) {
+            var pr = problems(x), eb = expiredBad(x).length;
+            return '<button class="order" data-act="emp" data-nr="' + x.nr + '" style="background:none;border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;font:inherit"><span style="width:44px;height:44px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-weight:600;grid-row:span 2">' + ini(x.name) + '</span><span style="min-width:0"><b style="font-weight:600">' + x.name + '</b> <small class="t-dim">nr ' + x.nr + '</small><br><small class="t-muted">' + x.st + ' · ' + x.halls.map(function (h) { return HALL[h]; }).join(', ') + '</small></span><span style="text-align:right"><span class="chip ' + STC[x.status] + '">' + x.status + '</span></span>' +
+              '<span style="grid-column:2/4;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><small class="t-dim">' + (x.since ? 'od ' + plDate(x.since) : 'data zatrudnienia: brak') + ' · ' + x.skillsN + ' kompetencji</small>' + (eb ? '<span class="chip c-red">nieaktualne badania</span>' : pr.length ? '<span class="chip c-orange">' + pr.length + ' do odnowienia</span>' : '') + (x.coins ? '<span class="chip" style="color:var(--gold)">' + x.coins + ' G</span>' : '') + '</span></button>';
+          }).join('') + '</div></section>';
+      }
+      return head + seg + tabs + body;
+    },
+    mount: function () { var q = $('#kq'); if (q) { q.addEventListener('input', function () { kd.q = q.value; var pos = q.selectionStart; render(); var n = $('#kq'); n.focus(); n.setSelectionRange(pos, pos); }); } },
+    on: function (act, el) {
+      if (act === 'khall') { kd.hall = el.dataset.h; render(); }
+      if (act === 'kview') { kd.view = el.dataset.v; render(); }
+    }
+  };
+
+  var CAL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+  function dateField(attrs, val, label) {
+    return '<span class="datef"><input type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="dd.mm.rrrr" class="in dtxt" value="' + plDate(val) + '" ' + attrs + ' aria-label="' + label + ' (dd.mm.rrrr)"><button type="button" class="calbtn" data-act="cal" aria-label="Wybierz datę z kalendarza">' + CAL + '</button><input type="date" class="dpick" tabindex="-1" aria-hidden="true" value="' + (val || '') + '"></span>';
+  }
+  function parsePl(v) {
+    v = (v || '').trim(); if (!v) return '';
+    var m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (m) return v;
+    m = v.match(/^(\d{1,2})[.\-\/ ](\d{1,2})[.\-\/ ](\d{4})$/); if (!m) return null;
+    var d = +m[1], mo = +m[2], y = +m[3], t = new Date(y, mo - 1, d);
+    if (t.getFullYear() !== y || t.getMonth() !== mo - 1 || t.getDate() !== d) return null;
+    return iso(y, mo, d);
+  }
+  function fmtSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+  function certRow(x, c) {
+    var s = certState(c), doc = '', sm = 'min-height:40px;font-size:12px;padding:0 10px';
+    if (c.t === 'bad') doc = '<button class="btn" style="' + sm + '" data-act="docskier" data-nr="' + x.nr + '" data-id="' + c.id + '">Skierowanie</button>';
+    if (c.t === 'szk' && c.from) doc = '<button class="btn" style="' + sm + '" data-act="doczasw" data-nr="' + x.nr + '" data-id="' + c.id + '">Zaświadczenie</button>';
+    var files = (c.files || []).map(function (f) { return '<div class="filerow"><span class="fic">PDF</span><span style="flex:1;min-width:0"><b style="font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(f.name) + '</b><small class="t-dim">' + fmtSize(f.size) + ' · dodano ' + esc(f.at) + '</small></span><button class="btn" style="' + sm + '" data-act="viewfile" data-nr="' + x.nr + '" data-id="' + c.id + '" data-fid="' + f.id + '">Podgląd</button><button class="btn" style="' + sm + '" data-act="delfile" data-nr="' + x.nr + '" data-id="' + c.id + '" data-fid="' + f.id + '" aria-label="Usuń plik ' + esc(f.name) + '">×</button></div>'; }).join('');
+    return '<div style="padding:12px 0;border-bottom:1px solid var(--line);display:grid;gap:8px">' +
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><span style="min-width:0"><b style="font-weight:500">' + esc(c.name) + '</b><br><small class="t-dim">' + esc([c.issuer, c.nr].filter(Boolean).join(' · ') || '—') + '</small></span><span class="chip ' + s[0] + '" style="flex:none">' + s[1] + '</span></div>' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted)">' + (c.to ? 'Ważne do' : 'Bezterminowe') + '</span>' + (c.to ? dateField('data-certtxt="' + x.nr + '|' + c.id + '"', c.to, 'Ważne do') : '') + '<span style="flex:1"></span>' + doc + '<label class="btn" style="' + sm + ';position:relative;overflow:hidden">+ PDF<input type="file" accept="application/pdf,image/*" multiple data-attach="' + x.nr + '|' + c.id + '" style="position:absolute;inset:0;opacity:0;cursor:pointer" aria-label="Dodaj plik do ' + esc(c.name) + '"></label><button class="btn" style="' + sm + '" data-act="delcert" data-nr="' + x.nr + '" data-id="' + c.id + '" aria-label="Usuń ' + esc(c.name) + '">Usuń</button></div>' + files + '</div>';
+  }
+  function empSheet(x, sec) {
+    var eb = expiredBad(x), szkX = x.certs.filter(function (c) { return c.t === 'szk' && certState(c)[2] === 0; });
+    var uprX = x.certs.filter(function (c) { return c.t === 'upr' && certState(c)[2] === 0; });
+    var form = '';
+    if (kd.add === x.nr) {
+      form = '<form data-form="addcert" data-nr="' + x.nr + '" class="card" style="background:var(--surface2);display:grid;gap:10px"><b>Nowa pozycja</b>' +
+        '<label style="font-size:13px" class="t-muted">Rodzaj<select id="acT" class="in" style="margin-top:4px">' + Object.keys(TYPES).map(function (t) { return '<option value="' + t + '">' + TYPES[t] + '</option>'; }).join('') + '</select></label>' +
+        '<label style="font-size:13px" class="t-muted">Nazwa (wybierz lub wpisz własną)<input id="acN" class="in" style="margin-top:4px" list="acList" placeholder="np. SEP E – eksploatacja do 1 kV" required><datalist id="acList">' + PRESETS.bad.concat(PRESETS.szk, PRESETS.upr).map(function (p) { return '<option value="' + p + '">'; }).join('') + '</datalist></label>' +
+        '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"><label style="font-size:13px" class="t-muted">Data wydania' + dateField('id="acF"', '2026-10-23', 'Data wydania') + '</label><label style="font-size:13px" class="t-muted">Ważne do (puste = bezterminowo)' + dateField('id="acTo"', '2029-10-23', 'Ważne do') + '</label></div>' +
+        '<label style="font-size:13px" class="t-muted">Skan dokumentu (PDF lub zdjęcie, opcjonalnie)<input id="acFile" type="file" accept="application/pdf,image/*" multiple class="in" style="margin-top:4px"></label>' +
+        '<label style="font-size:13px" class="t-muted">Numer dokumentu / wystawca<input id="acNr" class="in" style="margin-top:4px" placeholder="np. E/123/26 · Komisja SEP"></label>' +
+        '<div style="display:flex;gap:8px"><button type="button" class="btn" data-act="addcancel" style="flex:1">Anuluj</button><button class="btn p" style="flex:1">Zapisz</button></div></form>';
+    }
+    var section = function (t) { var arr = x.certs.filter(function (c) { return c.t === t; }); return '<div><div class="eyebrow" style="margin-bottom:2px">' + TYPES[t] + ' · ' + arr.length + '</div>' + (arr.length ? arr.map(function (c) { return certRow(x, c); }).join('') : '<p class="t-dim" style="margin:6px 0">Brak wpisów.</p>') + '</div>'; };
+    return '<div class="grab"></div><div style="display:flex;gap:14px;align-items:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--grad);display:grid;place-items:center;font-weight:700;font-size:20px;flex:none">' + ini(x.name) + '</span><div style="flex:1;min-width:0"><h2 style="font-size:21px">' + x.name + '</h2><small class="t-muted">nr ' + x.nr + ' · ' + x.st + '</small></div><span class="chip ' + STC[x.status] + '">' + x.status + '</span></div>' +
+      (eb.length ? '<div class="alert a-red" style="flex-direction:column;gap:8px"><b class="t-red">Pracownik posiada nieaktualne badania okresowe</b><span>' + eb.map(function (c) { return c.name + ' – ważne były do ' + plDate(c.to); }).join('<br>') + '. Bez aktualnego orzeczenia nie wolno dopuścić go do pracy (art. 229 § 4 Kodeksu pracy). Planowanie produkcji nie przydzieli mu zadań.</span><button class="btn p" data-act="docskier" data-nr="' + x.nr + '" data-id="' + eb[0].id + '">Generuj skierowanie na badania</button></div>' : '') +
+      (szkX.length ? '<div class="alert a-orange"><span class="chip c-orange">SZKOLENIE</span><span>Nieaktualne: ' + szkX.map(function (c) { return c.name; }).join(', ') + '. Zapisz pracownika na najbliższy termin szkolenia okresowego.</span></div>' : '') +
+      (uprX.length ? '<div class="alert a-orange"><span class="chip c-orange">UPRAWNIENIA</span><span>Wygasły: ' + uprX.map(function (c) { return c.name; }).join(', ') + '. System blokuje przydział do zadań wymagających tych uprawnień.</span></div>' : '') +
+      '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));font-size:14px">' + [['Przypisanie', x.halls.map(function (h) { return HALL[h]; }).join(', ')], ['Pracuje od', x.since ? plDate(x.since) : '<span class="t-orange">uzupełnij</span>'], ['Rodzaj umowy', 'Godzinówka (rozliczanie miesięczne)'], ['Wypłata', x.pay + ' dnia każdego miesiąca'], ['Stawka godzinowa', x.rate + ' zł <small class="t-dim">· widzą kadry i zarząd</small>'], ['Urlop do wykorzystania', x.leave + ' dni']].map(function (p) { return '<div><small class="t-dim">' + p[0] + '</small><div>' + p[1] + '</div></div>'; }).join('') + '</div>' +
+      '<p class="t-dim" style="font-size:12px;margin:0">Zmień datę „ważne do” na wsteczną, aby zobaczyć komunikat systemu. Zmiany zapisują się w tej przeglądarce (reset na ekranie startowym).</p>' +
+      '<button class="btn g full" data-act="addcert" data-nr="' + x.nr + '">+ Dodaj badanie, szkolenie lub uprawnienie</button>' + form +
+      section('bad') + section('szk') + section('upr') +
+      '<div id="secSizes"><div class="eyebrow" style="margin:6px 0">Rozmiary odzieży roboczej</div><div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">' + SIZES.map(function (s) { return '<label style="font-size:13px" class="t-muted">' + s[1] + '<select class="in" style="margin-top:4px" data-size="' + x.nr + '|' + s[0] + '">' + s[2].map(function (v) { return '<option' + (x.sizes[s[0]] === v ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></label>'; }).join('') + '</div></div>' +
+      '<div><div class="eyebrow" style="margin:6px 0">Wydana odzież i sprzęt BHP</div><div class="list"><div class="row"><span>Ubranie robocze (kurtka ' + x.sizes.kurtka + ', spodnie ' + x.sizes.spodnie + ')</span><span class="t-dim">wymiana 03.2027</span></div><div class="row"><span>Buty S3, rozmiar ' + x.sizes.buty + '</span><span class="t-dim">wydane 04.2026</span></div>' + (x.mont ? '<div class="row"><span>Szelki bezpieczeństwa</span><span class="t-orange">przegląd 11.2026</span></div>' : '<div class="row"><span>Przyłbica spawalnicza, rękawice ' + x.sizes.rekawice + '</span><span class="t-dim">wydane 2026</span></div>') + '</div></div>' +
+      (x.skillsN ? '<div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="kpi"><small>Wydajność</small><b>' + x.eff + '%</b></div><div class="kpi"><small>Nadgodziny – paźdz.</small><b>' + x.ot + ' h</b></div><div class="kpi"><small>Grafficoiny</small><b class="t-gold">' + x.coins + '</b></div></div>' : '') +
+      compSection(x) +
+      '<button class="btn full" data-act="close">Zamknij</button>';
+  }
+  /* --- pliki (PDF / zdjęcia) w IndexedDB tej przeglądarki --- */
+  var memFiles = {};
+  function idb() { return new Promise(function (res, rej) { try { var r = indexedDB.open('graffi-files', 1); r.onupgradeneeded = function () { r.result.createObjectStore('f'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; } catch (e) { rej(e); } }); }
+  function putFile(id, blob) { memFiles[id] = blob; return idb().then(function (db) { return new Promise(function (res) { var t = db.transaction('f', 'readwrite'); t.objectStore('f').put(blob, id); t.oncomplete = res; t.onerror = res; }); }).catch(function () {}); }
+  function getFile(f) {
+    if (f.url) return fetch(f.url).then(function (r) { return r.blob(); });
+    if (memFiles[f.id]) return Promise.resolve(memFiles[f.id]);
+    return idb().then(function (db) { return new Promise(function (res, rej) { var q = db.transaction('f').objectStore('f').get(f.id); q.onsuccess = function () { q.result ? res(q.result) : rej(new Error('brak')); }; q.onerror = function () { rej(q.error); }; }); });
+  }
+  function delFile(id) { delete memFiles[id]; return idb().then(function (db) { db.transaction('f', 'readwrite').objectStore('f').delete(id); }).catch(function () {}); }
+  function attachFiles(x, c, files) {
+    c.files = c.files || [];
+    return Promise.all(files.map(function (fl) {
+      if (fl.size > 15 * 1048576) { toast('Plik ' + fl.name + ' ma ponad 15 MB – pomijam'); return null; }
+      var id = 'f' + Date.now() + Math.floor(Math.random() * 1e6);
+      c.files.push({ id: id, name: fl.name, size: fl.size, type: fl.type, at: plDate(iso(TODAY.getFullYear(), TODAY.getMonth() + 1, TODAY.getDate())) });
+      return putFile(id, fl);
+    }));
+  }
+  var pdfLib = null;
+  function loadPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfLib) return pdfLib;
+    pdfLib = new Promise(function (res, rej) {
+      var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+      sc.onload = function () { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'; res(window.pdfjsLib); };
+      sc.onerror = function () { pdfLib = null; rej(new Error('Nie udało się wczytać przeglądarki PDF')); }; document.head.appendChild(sc);
+    });
+    return pdfLib;
+  }
+  function viewFile(x, c, f) {
+    kd.doc = x.nr;
+    openDoc(f.name, '<p class="t-muted" id="pdfmsg" style="color:#ddd">Wczytuję plik…</p><div id="pdfpages" style="display:flex;flex-direction:column;gap:16px;align-items:center;width:100%"></div>');
+    var bar = $('.docbar'); if (bar) bar.querySelector('[data-act="printdoc"]').remove();
+    getFile(f).then(function (blob) {
+      var url = URL.createObjectURL(blob), box = $('#pdfpages'), msg = $('#pdfmsg');
+      if (bar) { var a = document.createElement('a'); a.className = 'btn'; a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Otwórz osobno'; bar.insertBefore(a, bar.lastChild); }
+      if ((blob.type || f.type || '').indexOf('image') === 0 || /\.(jpe?g|png|webp|heic)$/i.test(f.name)) { msg.remove(); box.innerHTML = '<img src="' + url + '" alt="' + esc(f.name) + '" style="max-width:min(100%,900px);background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.35)">'; return; }
+      return loadPdfJs().then(function (lib) { return blob.arrayBuffer().then(function (buf) { return lib.getDocument({ data: buf }).promise; }); }).then(function (pdf) {
+        msg.textContent = c.name + ' · ' + pdf.numPages + ' str. · ' + x.name; msg.style.cssText = 'color:#ddd;margin:0';
+        var w = Math.min(box.clientWidth || 360, 900), chain = Promise.resolve();
+        for (var i = 1; i <= pdf.numPages; i++) (function (n) { chain = chain.then(function () { return pdf.getPage(n).then(function (pg) {
+          var v1 = pg.getViewport({ scale: 1 }), dpr = window.devicePixelRatio || 1, sc = w / v1.width, vp = pg.getViewport({ scale: sc * dpr });
+          var cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height; cv.style.cssText = 'width:' + w + 'px;max-width:100%;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.35)';
+          cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', 'Strona ' + n + ' – ' + f.name); box.appendChild(cv);
+          return pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise; }); }); })(i);
+        return chain;
+      });
+    }).catch(function (e) { var m = $('#pdfmsg'); if (m) m.textContent = 'Nie udało się otworzyć pliku (' + e.message + '). Pliki są zapisane tylko w tej przeglądarce.'; });
+  }
+  function compSection(x) {
+    var have = SKILLS.map(function (n, k) { return [n, k, x.lv[k] || 0]; }).filter(function (r) { return r[2] > 0; });
+    var free = SKILLS.map(function (n, k) { return [n, k]; }).filter(function (r) { return !(x.lv[r[1]] > 0); });
+    var lvlNames = ['', 'podstawy', 'samodzielnie', 'ekspert'];
+    var rows = have.map(function (r) { return '<div class="comp"><span class="nm">' + esc(r[0]) + '<br><small class="t-dim">' + lvlNames[r[2]] + '</small></span><span class="lvl' + (r[2] === 3 ? ' l3' : '') + '" role="group" aria-label="Poziom: ' + esc(r[0]) + '">' + [1, 2, 3].map(function (v) { return '<button class="' + (v <= r[2] ? 'on' : '') + '" data-act="setlvl" data-nr="' + x.nr + '" data-k="' + r[1] + '" data-v="' + v + '" aria-label="' + lvlNames[v] + '" aria-pressed="' + (v === r[2]) + '"><i></i></button>'; }).join('') + '</span><button class="btn" style="min-height:34px;padding:0 10px;font-size:12px" data-act="setlvl" data-nr="' + x.nr + '" data-k="' + r[1] + '" data-v="0" aria-label="Usuń kompetencję ' + esc(r[0]) + '">×</button></div>'; }).join('');
+    var add = kd.comp === x.nr
+      ? '<form data-form="addcomp" data-nr="' + x.nr + '" class="card" style="background:var(--surface2);display:grid;gap:10px;margin-top:8px"><label class="t-muted" style="font-size:13px">Kompetencja<select id="cpS" class="in" style="margin-top:4px">' + free.map(function (r) { return '<option value="' + r[1] + '">' + esc(r[0]) + '</option>'; }).join('') + '<option value="new">+ Nowa kompetencja (wpisz poniżej)…</option></select></label>' +
+        '<label class="t-muted" style="font-size:13px">Nazwa nowej kompetencji (opcjonalnie)<input id="cpN" class="in" style="margin-top:4px" placeholder="np. Obsługa plotera tnącego, Klejenie liter 3D"></label>' +
+        '<label class="t-muted" style="font-size:13px">Poziom<select id="cpL" class="in" style="margin-top:4px"><option value="1">● podstawy</option><option value="2" selected>●● samodzielnie</option><option value="3">●●● ekspert</option></select></label>' +
+        '<div style="display:flex;gap:8px"><button type="button" class="btn" data-act="compcancel" style="flex:1">Anuluj</button><button class="btn p" style="flex:1">Dodaj</button></div></form>'
+      : '<button class="btn g full" style="margin-top:8px" data-act="addcomp" data-nr="' + x.nr + '">+ Dodaj kompetencję</button>';
+    return '<div id="secComp"><div class="eyebrow" style="margin-bottom:2px">Kompetencje · ' + have.length + '</div>' + (rows || '<p class="t-dim" style="margin:6px 0">Brak przypisanych kompetencji.</p>') + add + '<small class="t-dim" style="display:block;margin-top:6px">Dotknij kropek, aby zmienić poziom. Macierz kompetencji i planowanie produkcji korzystają z tych danych.</small></div>' +
+      '';
+  }
+  function showEmp(nr, keepScroll, sec) {
+    var sh = $('.sheet'), sc = keepScroll && sh ? sh.scrollTop : 0;
+    openSheet(empSheet(byNr(nr)));
+    var n = $('.sheet'); if (n) { if (sec === 'sizes') { var t = $('#secSizes'); if (t) n.scrollTop = t.offsetTop - 20; } else n.scrollTop = sc; }
+  }
+
+  /* --- dokumenty: wzory urzędowe wypełnione danymi --- */
+  var FACT = {
+    prod: { opis: 'Praca fizyczna przy produkcji konstrukcji i elementów reklamy zewnętrznej (pylony, kasetony, litery 3D): cięcie i gięcie blach, spawanie MIG/MAG i TIG, szlifowanie, malowanie natryskowe, składanie i pakowanie. Praca 8 h na zmianę, w pozycji stojącej, z przenoszeniem elementów do 30 kg; obsługa gilotyny, prasy krawędziowej, frezarki CNC.',
+      f: ['hałas – ekspozycja ok. 86 dB(A) (pomiar z 03.2026); drgania przenoszone przez kończyny górne (szlifierki); promieniowanie optyczne (nadfioletowe, podczerwone) przy spawaniu łukowym', 'pyły spawalnicze; pył metali (stal, aluminium) przy szlifowaniu', 'dymy spawalnicze – tlenki żelaza, mangan i jego związki; rozpuszczalniki organiczne (ksylen, octan butylu) przy malowaniu', 'nie występują', 'obsługa maszyn z ruchomymi elementami; ręczne prace transportowe do 30 kg; prace szczególnie niebezpieczne – spawanie'], n: 9 },
+    mont: { opis: 'Montaż i demontaż pylonów, kasetonów, liter przestrzennych i oznakowania obiektów na terenie całego kraju (praca w delegacji): praca na wysokości powyżej 3 m z podestów ruchomych i drabin, wiercenie, kotwienie, podłączanie zasilania do 1 kV, kierowanie samochodem służbowym. Praca na otwartej przestrzeni, zmienny czas pracy.',
+      f: ['hałas – ekspozycja ok. 82 dB(A); drgania miejscowe (wiertarki, młoty udarowe); praca na otwartej przestrzeni w zmiennych warunkach atmosferycznych', 'pył cementowy i kwarcowy przy wierceniu w betonie – okresowo', 'nie występują', 'nie występują', 'praca na wysokości powyżej 3 m; obsługa podestów ruchomych; prace przy urządzeniach elektrycznych do 1 kV; kierowanie pojazdem służbowym; ręczne prace transportowe'], n: 9 },
+    sprz: { opis: 'Utrzymanie czystości hal produkcyjnych, szatni i pomieszczeń socjalnych; praca 8 h, w ruchu, z użyciem środków czystości.', f: ['nie występują', 'pył ogólny z hali produkcyjnej – okresowo', 'środki czystości i dezynfekcji (zgodnie z kartami charakterystyki)', 'nie występują', 'ręczne prace transportowe do 15 kg; poruszanie się po hali w trakcie pracy maszyn'], n: 4 }
+  };
+  function factFor(x) { return x.mont ? FACT.mont : x.st === 'sprzątaczka' ? FACT.sprz : FACT.prod; }
+  function docSkier(x, c) {
+    var F = factFor(x), st = x.st === 'niezdefiniowane' ? 'pracownik produkcji (stanowisko do uzupełnienia w kartotece)' : x.st;
+    var line = function (label, val, sub) { return '<p class="dl"><span>' + label + '</span> <u>' + val + '</u></p>' + (sub ? '<p class="sub">' + sub + '</p>' : ''); };
+    return '<article class="page"><p class="small" style="margin:0 0 16px">Wzór skierowania na obowiązkowe badania lekarskie</p>' +
+      '<div class="two"><div><u>GRAFFICO<br>[adres siedziby, NIP]</u><p class="sub">(oznaczenie pracodawcy)</p></div><div style="text-align:right"><u>Toruń, ' + plDate('2026-10-23') + '</u><p class="sub">(miejscowość, data)</p></div></div>' +
+      '<h3 class="dtitle">SKIEROWANIE NA BADANIA LEKARSKIE</h3><p class="center">(<s>wstępne</s>/okresowe/<s>kontrolne</s>*))</p>' +
+      '<p>Działając na podstawie art. 229 § 4a ustawy z dnia 26 czerwca 1974 r. – Kodeks pracy (Dz. U. z 2016 r. poz. 1666), kieruję na badania lekarskie:</p>' +
+      line(/^(Agnieszka|Wiesława)/.test(x.name) ? '<s>Pana</s>/Panią*)' : 'Pana/<s>Panią</s>*)', x.name.replace(/\.$/, '') + ' [nazwisko z kartoteki]', '(imię i nazwisko)') +
+      line('Nr PESEL**)', x.pesel + ' <i class="ex">(przykład)</i>') +
+      line(/^(Agnieszka|Wiesława)/.test(x.name) ? '<s>zamieszkałego</s>/zamieszkałą*)' : 'zamieszkałego/<s>zamieszkałą</s>*)', x.addr + ' <i class="ex">(przykład)</i>', '(miejscowość, ulica, nr domu, nr lokalu)') +
+      '<p>' + (/^(Agnieszka|Wiesława)/.test(x.name) ? '<s>zatrudnionego</s>/zatrudnioną*)' : 'zatrudnionego/<s>zatrudnioną</s>*)') + ' <s>lub podejmującego/podejmującą*)</s> pracę na stanowisku lub stanowiskach pracy</p><p class="dl"><u>' + st + ' – ' + x.halls.map(function (h) { return HALL[h]; }).join(', ') + '</u></p>' +
+      line('określenie stanowiska/stanowisk*) pracy***):', F.opis) +
+      '<p>Opis warunków pracy uwzględniający informacje o występowaniu na stanowisku lub stanowiskach pracy czynników niebezpiecznych, szkodliwych dla zdrowia lub czynników uciążliwych i innych wynikających ze sposobu wykonywania pracy, z podaniem wielkości narażenia oraz aktualnych wyników badań i pomiarów czynników szkodliwych dla zdrowia, wykonanych na tym stanowisku/stanowiskach – należy wpisać nazwę czynnika/czynników i wielkość/wielkości narażenia****):</p>' +
+      ['I. Czynniki fizyczne:', 'II. Pyły:', 'III. Czynniki chemiczne:', 'IV. Czynniki biologiczne:', 'V. Inne czynniki, w tym niebezpieczne:'].map(function (l, i) { return line(l, F.f[i]); }).join('') +
+      line('Łączna liczba czynników niebezpiecznych, szkodliwych dla zdrowia lub czynników uciążliwych', String(F.n)) +
+      '<p class="small">Poprzednie orzeczenie: ' + esc(c.nr || '—') + ', ważne do ' + plDate(c.to) + '. Rodzaj badania: ' + esc(c.name) + '.</p>' +
+      '<div class="sign"><u>&nbsp;</u><p class="sub">(podpis pracodawcy)</p></div><p class="pn">1</p></article>' +
+      '<article class="page small"><p><b>Objaśnienia:</b></p><p>*) Niepotrzebne skreślić.</p><p>**) W przypadku osoby, której nie nadano numeru PESEL – seria, numer i nazwa dokumentu potwierdzającego tożsamość, a w przypadku osoby przyjmowanej do pracy − data urodzenia.</p><p>***) Opisać: rodzaj pracy, podstawowe czynności, sposób i czas ich wykonywania.</p><p>****) Opis warunków pracy uwzględniający w szczególności przepisy wydane na podstawie art. 222 § 3, art. 222¹ § 3, art. 227 § 2 i art. 228 § 3 Kodeksu pracy, art. 25 pkt 1 ustawy – Prawo atomowe oraz załącznika nr 1 do rozporządzenia Ministra Zdrowia i Opieki Społecznej z dnia 30 maja 1996 r. w sprawie przeprowadzania badań lekarskich pracowników (pełna treść objaśnień – wzór z biznes.gov.pl).</p><p class="pn">2</p></article>';
+  }
+  function docZasw(x, c) {
+    var robot = c.name.indexOf('okresowe BHP') > -1;
+    var T = robot ? [['Wybrane regulacje prawne z zakresu prawa pracy dotyczące bhp', 1, 0], ['Zagrożenia czynnikami niebezpiecznymi, szkodliwymi i uciążliwymi na stanowiskach pracy (spawanie, obróbka metali, praca na wysokości) oraz środki ochrony', 2, 0], ['Kształtowanie bezpiecznych zachowań w sytuacjach zagrożeń – ćwiczenia', 1, 1], ['Postępowanie w razie wypadku, w tym udzielanie pierwszej pomocy', 1, 1], ['Ochrona przeciwpożarowa – zasady i ćwiczenia', 1, 0]]
+      : [['Zasady udzielania pierwszej pomocy, łańcuch przeżycia', 1, 0], ['Resuscytacja krążeniowo-oddechowa, AED', 0, 2], ['Urazy typowe dla zakładu (oparzenia, rany, porażenie prądem)', 1, 2]];
+    var th = 0, tp = 0; T.forEach(function (r) { th += r[1]; tp += r[2]; });
+    return '<article class="page"><div class="two"><u>Ośrodek Szkoleń BHP (przykład)</u><span class="small">1/2</span></div><p class="sub">(nazwa organizatora szkolenia)</p>' +
+      '<h3 class="dtitle" style="margin-top:28px">ZAŚWIADCZENIE<br>o ukończeniu szkolenia w dziedzinie bezpieczeństwa i higieny pracy</h3>' +
+      '<p class="dl"><span>Pan(i)</span> <u>' + x.name.replace(/\.$/, '') + ' [nazwisko z kartoteki]</u></p><p class="sub">(imię i nazwisko)</p>' +
+      '<p class="dl"><span>urodzony(a) dnia</span> <u>' + plDate(x.dob) + ' <i class="ex">(przykład)</i></u></p>' +
+      '<p class="dl"><span>ukończył(a) szkolenie</span> <u>' + esc(c.name) + (robot ? ' – szkolenie okresowe dla pracowników zatrudnionych na stanowiskach robotniczych' : '') + '</u></p><p class="sub">(nazwa formy szkolenia)</p>' +
+      '<p class="dl"><span>w formie</span> <u>' + (robot ? 'kursu z wykładami i ćwiczeniami' : 'kursu') + '</u><sup>1)</sup></p>' +
+      '<p class="dl"><span>organizowane przez</span> <u>Ośrodek Szkoleń BHP (przykład)</u></p><p class="sub">(nazwa organizatora szkolenia)</p>' +
+      '<p class="dl"><span>w dniach</span> <u>' + plDate(c.from) + ' – ' + plDate(c.from) + '</u></p>' +
+      '<p class="dl"><span>Celem szkolenia było</span> <u>' + (robot ? 'aktualizacja i ugruntowanie wiedzy oraz umiejętności z zakresu bhp na stanowiskach produkcji i montażu reklamy zewnętrznej' : 'nabycie umiejętności udzielania pierwszej pomocy w typowych sytuacjach zakładowych') + '</u></p>' +
+      '<p>Zaświadczenie wydano na podstawie § 16 ust. 3 rozporządzenia Ministra Gospodarki i Pracy z dnia 27 lipca 2004 r. w sprawie szkolenia w dziedzinie bezpieczeństwa i higieny pracy (Dz. U. z 2004 r. poz. 1860, z późn. zm.).</p>' +
+      '<div class="two" style="margin-top:28px"><div><u>Toruń, ' + plDate(c.from) + '</u><p class="sub">(miejscowość, data)</p></div><div style="text-align:right"><u>' + esc(c.nr || '—') + '</u><p class="sub">(nr zaświadczenia według rejestru)</p></div></div>' +
+      '<div class="sign"><u>&nbsp;</u><p class="sub">(pieczęć i podpis osoby upoważnionej przez organizatora szkolenia)</p></div>' +
+      '<p class="small">¹) Należy podać nazwę formy szkolenia zgodnie z § 13 ust. 1 i § 15 ust. 1–2 rozporządzenia.</p>' +
+      '<div class="valid ' + certState(c)[0] + '">Ważne do: <b>' + (c.to ? plDate(c.to) : 'bezterminowo') + '</b> · ' + certState(c)[1] + '</div></article>' +
+      '<article class="page"><div class="two"><span></span><span class="small">2/2</span></div><h3 class="dtitle" style="font-size:15px">Tematyka szkolenia</h3><table class="dt"><thead><tr><th>Lp.</th><th>Temat szkolenia</th><th>Liczba godzin zajęć teoretycznych (wykładów)</th><th>Liczba godzin zajęć praktycznych (ćwiczeń)</th></tr></thead><tbody>' +
+      T.map(function (r, i) { return '<tr><td>' + (i + 1) + '.</td><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join('') + '<tr><td></td><td><b>Razem</b></td><td><b>' + th + '</b></td><td><b>' + tp + '</b></td></tr></tbody></table></article>';
+  }
+  function openDoc(title, html) {
+    $('#overlay').innerHTML = '<div class="docv" role="dialog" aria-modal="true" aria-label="' + esc(title) + '"><div class="docbar"><b>' + esc(title) + '</b><span style="flex:1"></span><button class="btn" data-act="printdoc">Drukuj / PDF</button><button class="btn p" data-act="closedoc">Zamknij</button></div><div class="docs">' + html + '</div></div>';
+  }
+
   /* ---------- powłoka ---------- */
-  var NAV = [['pulpit', 'Pulpit', 'grid'], ['crm', 'CRM', 'crm'], ['plan', 'Produkcja', 'fab'], ['tablet', 'Tablet', 'tab'], ['monter', 'Montaż', 'pin'], ['hala', 'Hala', 'tv']];
+  var NAV = [['pulpit', 'Pulpit', 'grid'], ['crm', 'CRM', 'crm'], ['plan', 'Produkcja', 'fab'], ['tablet', 'Tablet', 'tab'], ['monter', 'Montaż', 'pin'], ['kadry', 'Pracownicy', 'people'], ['hala', 'Hala', 'tv']];
   var cur = 'start';
   function render() {
     var V = VIEWS[cur];
@@ -509,12 +826,32 @@
     if (act === 'bg') { if (e.target === a) closeSheet(); return; }
     if (act === 'close') return closeSheet();
     if (act === 'history') { e.preventDefault(); ui.otab = 4; return go('zlecenie'); }
+    if (act === 'emp') { e.preventDefault(); if (cur !== 'kadry') { go('kadry'); } kd.add = null; return showEmp(a.dataset.nr, false, a.dataset.sec); }
+    if (act === 'docskier' || act === 'doczasw') { var px = byNr(a.dataset.nr), pc = px.certs.filter(function (c) { return c.id === a.dataset.id; })[0]; kd.doc = px.nr; return openDoc(act === 'docskier' ? 'Skierowanie na badania – ' + px.name : 'Zaświadczenie BHP – ' + px.name, act === 'docskier' ? docSkier(px, pc) : docZasw(px, pc)); }
+    if (act === 'closedoc') { return kd.doc ? showEmp(kd.doc) : closeSheet(); }
+    if (act === 'printdoc') { try { window.print(); } catch (x) {} return; }
+    if (act === 'addcert') { kd.add = +a.dataset.nr; showEmp(a.dataset.nr, true); var f = $('#acN'); if (f) f.focus(); return; }
+    if (act === 'addcancel') { var nn = kd.add; kd.add = null; return showEmp(nn, true); }
+    if (act === 'cal') { var dp = a.parentNode.querySelector('.dpick'); try { if (dp.showPicker) dp.showPicker(); else { dp.focus(); dp.click(); } } catch (x) { dp.focus(); dp.click(); } return; }
+    if (act === 'viewfile' || act === 'delfile') { var vx = byNr(a.dataset.nr), vc = vx.certs.filter(function (c) { return c.id === a.dataset.id; })[0], vf = (vc.files || []).filter(function (f) { return f.id === a.dataset.fid; })[0];
+      if (act === 'viewfile') return viewFile(vx, vc, vf);
+      vc.files = vc.files.filter(function (f) { return f !== vf; }); if (!vf.url) delFile(vf.id); saveEmp(vx); toast('Usunięto plik'); return showEmp(vx.nr, true); }
+    if (act === 'setlvl') { var lx = byNr(a.dataset.nr); lx.lv[+a.dataset.k] = +a.dataset.v; lx.skillsN = lx.lv.filter(function (v) { return v > 0; }).length; saveEmp(lx); render(); return showEmp(lx.nr, true); }
+    if (act === 'addcomp') { kd.comp = +a.dataset.nr; showEmp(a.dataset.nr, true); return; }
+    if (act === 'compcancel') { var cn = kd.comp; kd.comp = null; return showEmp(cn, true); }
+    if (act === 'delcert') { var dx = byNr(a.dataset.nr); dx.certs = dx.certs.filter(function (c) { return c.id !== a.dataset.id; }); saveEmp(dx); render(); toast('Usunięto pozycję'); return showEmp(dx.nr, true); }
     if (act === 'toggle') { a.classList.toggle('on'); a.querySelector('.box').textContent = a.classList.contains('on') ? '✓' : ''; return; }
     if (act === 'okqc') { closeSheet(); return toast('Kontrola jakości zapisana i podpisana'); }
     if (act === 'sendissue') { if (!$('#issuePhoto').classList.contains('ok')) return toast('Dodaj zdjęcie – bez niego zgłoszenie nie zostanie wysłane'); closeSheet(); return toast('Zgłoszenie wysłane – powiadomiono odpowiedzialne osoby'); }
     if (VIEWS[cur].on) VIEWS[cur].on(act, a);
   });
   document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.dataset && t.dataset.cert) { var k = t.dataset.cert.split('|'), x = byNr(k[0]); x.certs.forEach(function (c) { if (c.id === k[1] && t.value) c.to = t.value; }); saveEmp(x); render(); showEmp(x.nr, !expiredBad(x).length); if (expiredBad(x).length) toast('Uwaga: pracownik ma nieaktualne badania okresowe'); return; }
+    if (t.classList && t.classList.contains('dpick')) { var tx = t.parentNode.querySelector('.dtxt'); if (t.value) { tx.value = plDate(t.value); tx.dispatchEvent(new Event('change', { bubbles: true })); } return; }
+    if (t.dataset && t.dataset.certtxt) { var v = parsePl(t.value); if (!v) { toast('Wpisz datę w formacie dd.mm.rrrr, np. 01.09.2026'); return; } var kk = t.dataset.certtxt.split('|'), cx = byNr(kk[0]); cx.certs.forEach(function (c) { if (c.id === kk[1]) c.to = v; }); saveEmp(cx); render(); showEmp(cx.nr, !expiredBad(cx).length); toast(expiredBad(cx).length ? 'Uwaga: pracownik ma nieaktualne badania okresowe' : 'Zapisano datę ' + plDate(v)); return; }
+    if (t.dataset && t.dataset.attach) { var ak = t.dataset.attach.split('|'), ax = byNr(ak[0]), ac = ax.certs.filter(function (c) { return c.id === ak[1]; })[0], fs = Array.prototype.slice.call(t.files || []); if (!fs.length) return; attachFiles(ax, ac, fs).then(function () { saveEmp(ax); showEmp(ax.nr, true); toast('Dodano ' + fs.length + ' plik(i) do: ' + ac.name); }); return; }
+    if (t.dataset && t.dataset.size) { var z = t.dataset.size.split('|'), y = byNr(z[0]); y.sizes[z[1]] = t.value; saveEmp(y); if (cur === 'kadry' && kd.view === 'sizes') render(); toast('Rozmiar zapisany'); return; }
     var inp = e.target; if (!inp.dataset || !inp.dataset.photo || !inp.files || !inp.files[0]) return;
     var fr = new FileReader();
     fr.onload = function () {
@@ -524,7 +861,35 @@
     };
     fr.readAsDataURL(inp.files[0]);
   });
-  document.addEventListener('submit', function (e) { e.preventDefault(); if (VIEWS[cur].submit) VIEWS[cur].submit(e.target); });
+  document.addEventListener('input', function (e) {
+    var t = e.target; if (!t.classList || !t.classList.contains('dtxt') || e.inputType === 'deleteContentBackward') return;
+    var d = t.value.replace(/[^\d]/g, '').slice(0, 8), o = d.slice(0, 2);
+    if (d.length > 2) o += '.' + d.slice(2, 4); if (d.length > 4) o += '.' + d.slice(4);
+    if (d.length === 2 || d.length === 4) o += '.';
+    if (/^\d{4}-/.test(t.value)) return; t.value = o;
+  });
+  document.addEventListener('keydown', function (e) { var t = e.target; if (e.key === 'Enter' && t.classList && t.classList.contains('dtxt') && t.dataset.certtxt) { e.preventDefault(); t.blur(); } });
+  document.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var f = e.target;
+    if (f.dataset.form === 'addcomp') {
+      var cx = byNr(f.dataset.nr), sel = $('#cpS').value, nm = $('#cpN').value.trim(), k;
+      if (sel === 'new' || (nm && sel === 'new')) { if (!nm) return toast('Wpisz nazwę nowej kompetencji'); k = SKILLS.indexOf(nm); if (k < 0) { SKILLS.push(nm); customSkills.push(nm); store.set('skills', customSkills); EMPX.forEach(function (e) { while (e.lv.length < SKILLS.length) e.lv.push(0); }); k = SKILLS.length - 1; } }
+      else k = +sel;
+      cx.lv[k] = +$('#cpL').value; cx.skillsN = cx.lv.filter(function (v) { return v > 0; }).length; saveEmp(cx); kd.comp = null; render(); showEmp(cx.nr, true); toast('Dodano kompetencję: ' + SKILLS[k]); return;
+    }
+    if (f.dataset.form === 'addcert') {
+      var x = byNr(f.dataset.nr), parts = $('#acNr').value.split('·');
+      var fF = parsePl($('#acF').value), fT = parsePl($('#acTo').value);
+      if (fF === null || fT === null) return toast('Wpisz datę w formacie dd.mm.rrrr, np. 14.11.2027');
+      var nc = { id: x.nr + '-n' + Date.now(), t: $('#acT').value, name: $('#acN').value.trim(), from: fF, to: fT, nr: (parts[0] || '').trim(), issuer: (parts[1] || '').trim(), files: [] };
+      x.certs.push(nc);
+      var fl = $('#acFile') ? Array.prototype.slice.call($('#acFile').files || []) : [];
+      attachFiles(x, nc, fl).then(function () { saveEmp(x); kd.add = null; render(); showEmp(x.nr, true); toast('Dodano: ' + nc.name + (fl.length ? ' + ' + fl.length + ' plik(i)' : '')); });
+      return;
+    }
+    if (VIEWS[cur].submit) VIEWS[cur].submit(f);
+  });
   $('#homeBtn').addEventListener('click', function () { go('start'); });
   $('#bellBtn').addEventListener('click', function () { openSheet('<div class="grab"></div><h2>Powiadomienia</h2><div class="grid">' + allAlerts().map(function (a) { return '<div class="alert ' + a[0] + '"><span class="chip ' + a[1] + '">' + a[2] + '</span><span>' + a[3] + '</span></div>'; }).join('') + '</div>' + (events.length ? '<h2 style="font-size:17px;margin-top:6px">Ostatnie zdarzenia</h2>' + eventsHtml(6) : '') + '<button class="btn full" data-act="close">Zamknij</button>'); });
   function bell() { var b = $('#bellBtn .badge'); if (b) b.textContent = allAlerts().length; }

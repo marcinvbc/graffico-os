@@ -1,6 +1,6 @@
 {
-  "name": "Graffico OS",
-  "short_name": "Graffico OS",
+  "name": "GRAFFI Flow",
+  "short_name": "GRAFFI Flow",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0E0D0C",
