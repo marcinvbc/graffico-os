@@ -120,7 +120,7 @@
         '<button class="btn" data-act="reset" style="align-self:flex-start">Resetuj demo (przed kolejną prezentacją)</button>';
     },
     on: function (act) {
-      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
+      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
     }
   };
 
@@ -236,14 +236,15 @@
       if (crm.screen === 'szansa') return dealHtml();
       if (crm.screen === 'kreator') return wizardHtml();
       if (crm.screen === 'realizacja') return realHtml();
+      if (crm.tab === 'firmy') return crmTabs() + firmsHtml();
+      if (crm.tab === 'zrodla') return crmTabs() + sourcesHtml();
       LEADS.forEach(function (l) { if (l.id === DEAL_ID) { l.stage = deal.stage; l.prob = STAGES[deal.stage][1] + '%'; if (deal.offerNr) l.value = zl(calc(deal.cfg).tot.net).replace(' zł', '') + ' zł'; } });
       var val = function (l) { return parseFloat(String(l.value).replace(/\s/g, '').replace(',', '.')) * (String(l.value).indexOf('tys') > -1 ? 1000 : 1); };
       var open = LEADS.filter(function (l) { return l.stage < 6; });
       var sum = 0, wsum = 0; open.forEach(function (l) { sum += val(l); wsum += val(l) * STAGES[l.stage][1] / 100; });
       var srcStats = {}; LEADS.forEach(function (l) { srcStats[l.source] = (srcStats[l.source] || 0) + 1; });
-      return '<div class="kpis"><div class="kpi"><small>Otwarte szanse</small><b>' + open.length + '</b><em class="t-dim">w lejku demo</em></div><div class="kpi"><small>Wartość lejka</small><b>' + zl(sum) + '</b></div><div class="kpi"><small>Ważona (× %)</small><b>' + zl(wsum) + '</b><em class="t-dim">wartość × prawdopodobieństwo etapu</em></div><div class="kpi"><small>Wygrane / przegrane (rok)</small><b class="tab">342 / 186</b></div><div class="kpi" style="border-color:rgba(255,153,0,.4)"><small class="t-orange">Follow-up po terminie</small><b>' + LEADS.filter(function (l) { return l.late; }).length + '</b></div></div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" data-act="newlead">+ Nowe zapytanie</button><button class="btn" data-act="srcs">Źródła leadów (' + SOURCES.length + ')</button><button class="btn g" data-act="opendeal">Pokaż pełną ścieżkę: szansa ' + DEAL_ID + ' →</button></div>' +
-        (crm.src ? '<section class="card"><div class="h-row"><h2>Źródła leadów</h2><small class="t-dim">skuteczność z historii</small></div><div style="display:flex;gap:6px;flex-wrap:wrap">' + SOURCES.map(function (s) { return '<span class="chip">' + esc(s) + (srcStats[s] ? ' · ' + srcStats[s] : '') + '</span>'; }).join('') + '</div><form data-form="addsrc" style="display:flex;gap:8px;margin-top:10px"><label for="srcIn" style="position:absolute;left:-9999px">Nowe źródło</label><input id="srcIn" class="in" placeholder="Dodaj źródło, np. Facebook, Oferteo"><button class="btn p">Dodaj</button></form></section>' : '') +
+      return crmTabs() + '<div class="kpis"><div class="kpi"><small>Otwarte szanse</small><b>' + open.length + '</b><em class="t-dim">w lejku demo</em></div><div class="kpi"><small>Wartość lejka</small><b>' + zl(sum) + '</b></div><div class="kpi"><small>Ważona (× %)</small><b>' + zl(wsum) + '</b><em class="t-dim">wartość × prawdopodobieństwo etapu</em></div><div class="kpi"><small>Wygrane / przegrane (rok)</small><b class="tab">342 / 186</b></div><div class="kpi" style="border-color:rgba(255,153,0,.4)"><small class="t-orange">Follow-up po terminie</small><b>' + LEADS.filter(function (l) { return l.late; }).length + '</b></div></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" data-act="addlead">+ Dodaj lead</button><button class="btn g" data-act="opendeal">Pokaż pełną ścieżkę: szansa ' + DEAL_ID + ' →</button></div>' +
         '<p class="t-dim" style="margin:0;font-size:13px">Etapy lejka mają przypisane prawdopodobieństwo. Przesuń w bok, dotknij karty, aby otworzyć szansę.</p>' +
         '<div class="scroll-x"><div class="kan" style="grid-auto-columns:minmax(230px,74vw)">' + STAGES.slice(0, 7).map(function (st, i) {
           var ls = LEADS.filter(function (l) { return l.stage === i; }), s = 0; ls.forEach(function (l) { s += val(l); });
@@ -254,6 +255,46 @@
     },
     on: function (act, el) {
       if (act === 'lead') { var id = +el.dataset.id; if (id === DEAL_ID) { crm.screen = 'szansa'; render(); window.scrollTo(0, 0); return; } ui.lead = id; ui.ai = false; openSheet(leadSheet()); }
+      if (act === 'crmtab') { crm.tab = el.dataset.t; render(); return; }
+      if (act === 'firm') { openSheet(firmCard(firmById(el.dataset.id))); return; }
+      if (act === 'addlead') { crm.lf = { firm: el.dataset.firm ? +el.dataset.firm : null, q: '', owner: 'Agnieszka W.', src: SOURCES[0], prod: 'Pylon', person: 0 }; openSheet(leadForm()); return; }
+      if (act === 'pickfirm') { crm.lf.firm = +el.dataset.id; crm.lf.person = firmById(el.dataset.id).contacts.length ? 0 : 'new'; reSheet(leadForm()); return; }
+      if (act === 'lfclear') { crm.lf.firm = null; reSheet(leadForm()); return; }
+      if (act === 'lfset') { crm.lf[el.dataset.k] = el.dataset.v; reSheet(leadForm()); return; }
+      if (act === 'leadback') { reSheet(leadForm()); return; }
+      if (act === 'newfirm') { crm.ff = { name: '', nip: '', branza: 'Usługi', owner: 'Agnieszka W.', _back: el.dataset.back || '' }; openSheet(firmForm()); return; }
+      if (act === 'editfirm') { var ef = firmById(el.dataset.id); crm.ff = JSON.parse(JSON.stringify(ef)); crm.ff._back = ''; openSheet(firmForm()); return; }
+      if (act === 'ffset') { crm.ff[el.dataset.k] = el.dataset.v; reSheet(firmForm()); return; }
+      if (act === 'gus') {
+        var n = String(crm.ff.nip || '').replace(/[^\d]/g, '');
+        if (!nipOk(n)) { toast('Wpisz poprawny 10-cyfrowy NIP'); return; }
+        var g = GUS_DEMO[n];
+        if (g) { Object.keys(g).forEach(function (k) { if (g[k] !== undefined) crm.ff[k] = g[k]; }); crm.ff._gus = 'Pobrano z GUS: ' + g.full + ', ' + g.addr + ', ' + g.zip + ' ' + g.city + ' (symulacja).'; }
+        else crm.ff._gus = 'Symulacja: dla tego NIP w wersji docelowej rejestr GUS uzupełni nazwę, REGON i adres. W demo działają NIP 123-456-32-18 i 527-171-11-06.';
+        crm.ff.nip = n; reSheet(firmForm()); return;
+      }
+      if (act === 'usefirm') { if (crm.ff._back === 'lead') { crm.lf.firm = +el.dataset.id; reSheet(leadForm()); } else openSheet(firmCard(firmById(el.dataset.id))); return; }
+      if (act === 'savefirm') {
+        var ff = crm.ff, nn = String(ff.nip || '').replace(/[^\d]/g, '');
+        if (!String(ff.name || '').trim()) return toast('Podaj nazwę kontrahenta');
+        if (nn && !nipOk(nn)) return toast('NIP jest nieprawidłowy – popraw albo zostaw puste');
+        if (nn && FIRMS.some(function (x) { return x.nip === nn && x.id !== ff.id; })) return toast('Kontrahent z tym NIP już istnieje');
+        var rec = { id: ff.id || Math.max.apply(null, FIRMS.map(function (x) { return x.id; })) + 1, name: ff.name.trim(), full: ff.full || '', nip: nn, regon: ff.regon || '', addr: ff.addr || '', zip: ff.zip || '', city: ff.city || '', woj: ff.woj || '', branza: ff.branza || '', owner: ff.owner || 'Agnieszka W.', source: ff.source || (crm.lf && crm.lf.src) || '', added: ff.added || '24.10.2026', www: ff.www || '', contacts: ff.contacts || [] };
+        var ix = FIRMS.map(function (x) { return x.id; }).indexOf(rec.id); if (ix > -1) FIRMS[ix] = rec; else FIRMS.unshift(rec);
+        saveFirms(); render(); toast('Zapisano kontrahenta: ' + rec.name);
+        if (ff._back === 'lead') { crm.lf.firm = rec.id; crm.lf.person = 'new'; openSheet(leadForm()); } else openSheet(firmCard(rec));
+        return;
+      }
+      if (act === 'savelead') {
+        var d = crm.lf, fm = firmById(d.firm);
+        if (!String(d.title || '').trim()) return toast('Wpisz temat zapytania');
+        var cl = parsePl(d.close || '2026-11-30');
+        if (d.person === 'new' && d.pname) { fm.contacts.push({ name: d.pname, role: d.prole || '', phone: '', email: '' }); saveFirms(); }
+        var v = +String(d.value || '').replace(/[^\d]/g, '');
+        LEADS.unshift({ id: 401 + LEADS.length, stage: 0, title: d.title.trim(), client: fm.name, value: v ? (v >= 1000 ? Math.round(v / 1000) + ' tys. zł' : v + ' zł') : '—', source: d.src, contact: 'dziś', prob: '10%', close: cl ? plDate(cl) : '—', owner: d.owner, prod: d.prod });
+        closeSheet(); crm.tab = 'lejek'; render(); toast('Dodano lead: ' + d.title.trim() + ' – ' + fm.name);
+        return;
+      }
       if (act === 'opendeal') { crm.screen = 'szansa'; render(); window.scrollTo(0, 0); }
       if (act === 'srcs') { crm.src = !crm.src; render(); }
       if (act === 'newlead') openSheet('<div class="grab"></div><h2>Nowe zapytanie</h2><form data-form="newlead" class="grid"><label class="t-muted" style="font-size:13px">Firma / klient<input id="nlC" class="in" style="margin-top:4px" required placeholder="np. Stacja paliw XYZ"></label><label class="t-muted" style="font-size:13px">Czego dotyczy<input id="nlT" class="in" style="margin-top:4px" required placeholder="np. Pylon cenowy 6 m"></label><label class="t-muted" style="font-size:13px">Źródło<select id="nlS" class="in" style="margin-top:4px">' + SOURCES.map(function (s) { return '<option>' + esc(s) + '</option>'; }).join('') + '</select></label><label class="t-muted" style="font-size:13px">Szacowana wartość (zł netto)<input id="nlV" class="in" inputmode="numeric" style="margin-top:4px" placeholder="np. 45000"></label><button class="btn p full">Dodaj do lejka (Nowe zapytanie, 10%)</button><button type="button" class="btn full" data-act="close">Anuluj</button></form>');
@@ -277,6 +318,7 @@
       if (act === 'resetdeal') { deal = JSON.parse(JSON.stringify(DEAL0)); saveDeal(); ORDERS = ORDERS.filter(function (o) { return o.nr !== '2171'; }); crm.screen = 'szansa'; render(); }
     },
     submit: function (f) {
+      if (f.dataset.form === 'addcontact') { var cf = firmById(f.dataset.id), pv = $('#ctP').value; cf.contacts.push({ name: $('#ctN').value, role: $('#ctR').value, phone: pv.indexOf('@') < 0 ? pv : '', email: pv.indexOf('@') > -1 ? pv : '' }); saveFirms(); reSheet(firmCard(cf)); toast('Dodano osobę kontaktową'); return; }
       if (f.dataset.form === 'addsrc') { var v = $('#srcIn').value.trim(); if (v && SOURCES.indexOf(v) < 0) { SOURCES.push(v); store.set('sources', SOURCES); toast('Dodano źródło: ' + v); } render(); }
       if (f.dataset.form === 'newlead') { LEADS.unshift({ id: 400 + LEADS.length, stage: 0, title: $('#nlT').value, client: $('#nlC').value, value: ($('#nlV').value ? Math.round(+$('#nlV').value / 1000) + ' tys. zł' : '—'), source: $('#nlS').value, contact: 'dziś', prob: '10%', close: '—' }); closeSheet(); render(); toast('Dodano zapytanie do lejka'); }
       if (f.dataset.form === 'nextstep') { deal.next.push([$('#nsT').value, $('#nsD').value || 'do ustalenia', 'Agnieszka W.']); saveDeal(); render(); toast('Dodano przypomnienie'); }
@@ -398,6 +440,121 @@
       '<section class="card"><div class="h-row" style="flex-wrap:wrap"><h2>4. Zlecenie montażu</h2><a href="#monter" data-go="monter" style="font-size:13px">Aplikacja montażysty →</a></div><div class="grid g2" style="font-size:14px"><div><small class="t-dim">Termin</small><div>04.12.2026, 7:00 (1 dzień)</div></div><div><small class="t-dim">Adres</small><div>' + esc(c.place) + '</div></div><div><small class="t-dim">Sprzęt</small><div>HDS 12 t, podnośnik koszowy 12 m, agregat</div></div><div><small class="t-dim">Kontakt na miejscu</small><div>Ewa N. – kierownik administracji</div></div></div>' +
       '<div class="eyebrow" style="margin:12px 0 4px">Ekipa – kontrola uprawnień i badań</div><div class="list">' + crew.map(function (r) { return '<div class="row"><span>' + r[0].name + '<br><small class="t-dim">' + r[0].st + '</small></span><span class="chip ' + (r[1] ? 'c-green' : 'c-red') + '" style="align-self:center">' + (r[1] ? 'może jechać' : 'brak ważnych uprawnień/badań') + '</span></div>'; }).join('') + '</div>' +
       '<button class="btn p full" style="margin-top:10px" data-act="sendmont">Wyślij zlecenie montażu do ekipy A</button></section>';
+  }
+
+  /* ================= CRM: kontrahenci, GUS, dodawanie leada, źródła ================= */
+  var BRANZE = ['Paliwowa', 'Medyczna', 'Miasta, gminy', 'Handlowa', 'Produkcyjna', 'Usługi', 'Nieruchomości', 'Transportowa', 'Bankowa', 'Edukacja', 'Motoryzacyjna', 'Informatyczna', 'Apteczna', 'Pośrednik'];
+  var PRODUCTS = ['Pylon', 'Pylon cenowy', 'Witacz', 'Otok', 'Billboard', 'Stacja paliw', 'Stojak', 'Kaseton', 'Litery 3D', 'Rura reklamowa', 'Konstrukcja stalowa', 'Inny'];
+  var OWNERS = ['Agnieszka W.', 'Robert Ś.', 'Michał W.'];
+  var SRC_IC = { 'Formularz www': 'M4 5h16v14H4zM4 9h16', 'Agent AI (czat na stronie)': 'M12 3l1.8 4.7L18 9.5l-4.2 1.8L12 16l-1.8-4.7L6 9.5l4.2-1.8z', 'Telefon': 'M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2', 'E-mail': 'M3 6h18v12H3zM3 6l9 7 9-7', 'Polecenie': 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6M16 11l2 2 4-4', 'Klient stały': 'M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z', 'Przetarg': 'M4 20h16M6 20V9l6-5 6 5v11M10 20v-6h4v6', 'Targi': 'M3 21V8l9-5 9 5v13M9 21v-6h6v6', 'LinkedIn': 'M4 4h16v16H4zM8 10v6M8 7v.5M12 16v-4a2 2 0 014 0v4', 'Google Ads': 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4', 'Wizyta handlowca (Tourplan)': 'M12 21s7-6 7-12a7 7 0 10-14 0c0 6 7 12 7 12zM12 9v.5' };
+  var SRC_HIST = { 'Klient stały': [140, 52, 1840], 'Polecenie': [96, 41, 1120], 'Wizyta handlowca (Tourplan)': [70, 30, 610], 'Targi': [22, 27, 240], 'Telefon': [120, 25, 690], 'Agent AI (czat na stronie)': [34, 22, 150], 'E-mail': [88, 20, 410], 'Formularz www': [210, 18, 760], 'Przetarg': [40, 15, 380], 'LinkedIn': [18, 11, 60], 'Google Ads': [64, 9, 170] };
+  function srcIcon(s) { var d = SRC_IC[s] || 'M12 3v18M3 12h18'; return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>'; }
+  var FIRMS0 = [
+    { id: 1818, name: 'AMIC', full: 'AMIC POLSKA Sp. z o.o.', nip: '5271711106', regon: '', addr: 'ul. Ogrodowa 58', zip: '00-876', city: 'Warszawa', woj: 'mazowieckie', branza: 'Paliwowa', owner: 'Agnieszka W.', source: 'Wizyta handlowca (Tourplan)', added: '23.10.2018', www: 'amicenergy.pl', contacts: [{ name: 'Krzysztof S.', role: 'Prezes Zarządu', phone: '', email: '' }] },
+    { id: 2101, name: 'Centrum Medyczne SALUS', full: 'Centrum Medyczne SALUS sp. z o.o.', nip: '', regon: '', addr: 'ul. Szosa Chełmińska 120', zip: '87-100', city: 'Toruń', woj: 'kujawsko-pomorskie', branza: 'Medyczna', owner: 'Agnieszka W.', source: 'Formularz www', added: '12.10.2026', www: '', contacts: [{ name: 'Ewa N.', role: 'Kierownik administracji', phone: '', email: '' }] },
+    { id: 1902, name: 'Trefl', full: '', nip: '', regon: '', addr: '', zip: '', city: 'Gdynia', woj: 'pomorskie', branza: 'Produkcyjna', owner: 'Robert Ś.', source: 'Polecenie', added: '04.02.2020', www: '', contacts: [] },
+    { id: 2044, name: 'Port Kopytkowo', full: '', nip: '', regon: '', addr: '', zip: '', city: 'Kopytkowo', woj: 'pomorskie', branza: 'Usługi', owner: 'Robert Ś.', source: 'LinkedIn', added: '17.06.2020', www: '', contacts: [] },
+    { id: 2077, name: 'Park Handlowy Parczew', full: '', nip: '', regon: '', addr: '', zip: '', city: 'Parczew', woj: 'lubelskie', branza: 'Nieruchomości', owner: 'Agnieszka W.', source: 'Targi', added: '15.06.2020', www: '', contacts: [{ name: 'Zarządca obiektu', role: 'Property manager', phone: '', email: '' }] },
+    { id: 2110, name: 'Fabryka Ostrów', full: '', nip: '', regon: '', addr: '', zip: '', city: 'Ostrów Wlkp.', woj: 'wielkopolskie', branza: 'Produkcyjna', owner: 'Michał W.', source: 'Klient stały', added: '08.06.2020', www: '', contacts: [] },
+    { id: 1550, name: 'Urząd Miasta Toruń', full: '', nip: '', regon: '', addr: '', zip: '87-100', city: 'Toruń', woj: 'kujawsko-pomorskie', branza: 'Miasta, gminy', owner: 'Michał W.', source: 'Przetarg', added: '02.06.2020', www: '', contacts: [{ name: 'Wydział Promocji', role: 'Zamawiający', phone: '', email: '' }] },
+    { id: 2120, name: 'Stalprofil (myjnia Ostrów)', full: '', nip: '', regon: '', addr: '', zip: '', city: 'Ostrów Wlkp.', woj: 'wielkopolskie', branza: 'Usługi', owner: 'Agnieszka W.', source: 'Telefon', added: '24.06.2020', www: '', contacts: [] },
+    { id: 2121, name: 'Sela Logistics', full: '', nip: '', regon: '', addr: '', zip: '', city: 'Stryków', woj: 'łódzkie', branza: 'Transportowa', owner: 'Robert Ś.', source: 'Agent AI (czat na stronie)', added: '17.06.2020', www: '', contacts: [] },
+    { id: 1777, name: 'UM Słubice', full: '', nip: '', regon: '', addr: '', zip: '', city: 'Słubice', woj: 'lubuskie', branza: 'Miasta, gminy', owner: 'Michał W.', source: 'Przetarg', added: '23.06.2020', www: '', contacts: [] }
+  ];
+  var FIRMS = store.get('firms', null) || JSON.parse(JSON.stringify(FIRMS0));
+  function saveFirms() { store.set('firms', FIRMS); }
+  function firmById(id) { return FIRMS.filter(function (f) { return f.id === +id; })[0]; }
+  function completeness(f) { var k = ['full', 'nip', 'regon', 'addr', 'zip', 'city', 'woj', 'branza', 'www', 'source']; var n = k.filter(function (x) { return f[x]; }).length + (f.contacts.length ? 2 : 0); return Math.round(n / 12 * 100); }
+  function nipOk(n) { n = String(n || '').replace(/[^\d]/g, ''); if (n.length !== 10) return false; var w = [6, 5, 7, 2, 3, 4, 5, 6, 7], s = 0; for (var i = 0; i < 9; i++) s += w[i] * +n[i]; return s % 11 === +n[9]; }
+  function nipFmt(n) { n = String(n || '').replace(/[^\d]/g, ''); return n.length === 10 ? n.slice(0, 3) + '-' + n.slice(3, 6) + '-' + n.slice(6, 8) + '-' + n.slice(8) : n; }
+  var GUS_DEMO = { '5271711106': { name: 'AMIC', full: 'AMIC POLSKA Sp. z o.o.', regon: '[REGON z GUS]', addr: 'ul. Ogrodowa 58', zip: '00-876', city: 'Warszawa', woj: 'mazowieckie' }, '1234563218': { name: 'Stacja Paliw DEMO', full: 'PRZYKŁADOWA STACJA PALIW „DEMO” sp. z o.o. (dane fikcyjne)', regon: '000000000', addr: 'ul. Testowa 1', zip: '87-100', city: 'Toruń', woj: 'kujawsko-pomorskie', www: '' } };
+  crm.tab = 'lejek'; crm.lf = null; crm.ff = null; crm.fq = '';
+
+  function crmTabs() {
+    return '<div class="seg" role="tablist" aria-label="CRM">' + [['lejek', 'Lejek sprzedaży'], ['firmy', 'Kontrahenci (' + FIRMS.length + ')'], ['zrodla', 'Źródła leadów']].map(function (t) { return '<button data-act="crmtab" data-t="' + t[0] + '" aria-pressed="' + (crm.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+  }
+
+  /* --- katalog kontrahentów --- */
+  function firmsHtml() {
+    var q = crm.fq.toLowerCase();
+    var list = FIRMS.filter(function (f) { return !q || (f.name + ' ' + f.full + ' ' + f.nip + ' ' + f.city + ' ' + f.branza).toLowerCase().indexOf(q) > -1; });
+    var incomplete = FIRMS.filter(function (f) { return completeness(f) < 60; }).length;
+    return '<div class="kpis"><div class="kpi"><small>Kontrahenci w systemie</small><b>1 785</b><em class="t-dim">w demo ' + FIRMS.length + '</em></div><div class="kpi"><small>Kontakty</small><b>1 805</b></div><div class="kpi" style="border-color:rgba(255,153,0,.4)"><small class="t-orange">Karty do uzupełnienia</small><b>' + incomplete + '</b><em class="t-dim">kompletność &lt; 60%</em></div><div class="kpi"><small>Bez aktualizacji &gt; rok</small><b>605</b></div></div>' +
+      '<section class="card"><div class="h-row" style="flex-wrap:wrap"><h2>Kontrahenci</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><label for="fq" style="position:absolute;left:-9999px">Szukaj kontrahenta</label><input id="fq" class="in" style="width:220px;padding:8px 12px" placeholder="Szukaj: nazwa, NIP, miasto" value="' + esc(crm.fq) + '"><button class="btn p" data-act="newfirm">+ Dodaj kontrahenta</button></div></div><div class="list" id="firmList">' + firmRows(list) + '</div></section>';
+  }
+  function firmRows(list) {
+    if (!list.length) return '<p class="t-dim" style="margin:8px 0">Brak wyników. Dodaj kontrahenta ręcznie albo pobierz dane z GUS po numerze NIP.</p>';
+    return list.map(function (f) {
+      var c = completeness(f), deals = LEADS.filter(function (l) { return l.client.indexOf(f.name.split(' ')[0]) > -1 || f.name.indexOf(l.client.split(' ')[0]) > -1; }).length;
+      return '<button class="order" data-act="firm" data-id="' + f.id + '" style="background:none;border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;font:inherit"><span style="width:44px;height:44px;border-radius:12px;background:var(--surface3);display:grid;place-items:center;font-weight:700;grid-row:span 2">' + esc(f.name.slice(0, 2).toUpperCase()) + '</span><span style="min-width:0"><b style="font-weight:600">' + esc(f.name) + '</b><br><small class="t-muted">' + esc(f.branza) + ' · ' + esc(f.city) + ' · opiekun: ' + esc(f.owner) + '</small></span><span style="text-align:right;font-size:12px" class="tab">' + (f.nip ? 'NIP ' + nipFmt(f.nip) : '<span class="t-orange">brak NIP</span>') + '</span>' +
+        '<span style="grid-column:2/4;display:flex;gap:8px;align-items:center"><span class="bar" style="flex:1;max-width:160px"><i style="width:' + c + '%;' + (c < 60 ? 'background:var(--orange)' : '') + '"></i></span><small class="t-dim">karta ' + c + '%</small>' + (deals ? '<span class="chip c-pink">' + deals + ' szans' + (deals === 1 ? 'a' : 'e') + '</span>' : '') + '</span></button>';
+    }).join('');
+  }
+  function firmCard(f) {
+    var c = completeness(f);
+    var leads = LEADS.filter(function (l) { return l.client.indexOf(f.name.split(' ')[0]) > -1 || f.name.indexOf(l.client.split(' ')[0]) > -1; });
+    var orders = ORDERS.filter(function (o) { return o.client.indexOf(f.name.split(' ')[0]) > -1 || f.name.indexOf(o.client.split(' ')[0]) > -1; });
+    var row = function (k, v) { return '<div><small class="t-dim">' + k + '</small><div>' + (v ? esc(v) : '<span class="t-orange">uzupełnij</span>') + '</div></div>'; };
+    return '<div class="grab"></div><div style="display:flex;gap:12px;align-items:center"><span style="width:52px;height:52px;border-radius:14px;background:var(--grad);display:grid;place-items:center;font-weight:700;flex:none">' + esc(f.name.slice(0, 2).toUpperCase()) + '</span><div style="flex:1;min-width:0"><h2 style="font-size:20px">' + esc(f.name) + '</h2><small class="t-muted">ID ' + f.id + ' · dodano ' + esc(f.added) + ' · karta uzupełniona w ' + c + '%</small></div></div>' +
+      (c < 60 ? '<div class="alert a-orange" style="align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:180px">Karta niekompletna. Uzupełnij dane jednym kliknięciem z rejestru GUS (wymaga NIP).</span><button class="btn" data-act="editfirm" data-id="' + f.id + '">Uzupełnij</button></div>' : '') +
+      '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));font-size:14px">' + row('Pełna nazwa', f.full) + row('NIP', f.nip ? nipFmt(f.nip) : '') + row('REGON', f.regon) + row('Adres', [f.addr, [f.zip, f.city].join(' ')].filter(function (x) { return x.trim(); }).join(', ')) + row('Województwo', f.woj) + row('Branża', f.branza) + row('Opiekun', f.owner) + row('Źródło pozyskania', f.source) + row('Strona www', f.www) + '</div>' +
+      '<div><div class="eyebrow" style="margin:6px 0">Osoby kontaktowe · ' + f.contacts.length + '</div><div class="list">' + (f.contacts.length ? f.contacts.map(function (p) { return '<div class="row"><span>' + esc(p.name) + '<br><small class="t-dim">' + esc(p.role) + '</small></span><small class="t-dim" style="align-self:center">' + esc([p.phone, p.email].filter(Boolean).join(' · ') || '[telefon, e-mail]') + '</small></div>'; }).join('') : '<p class="t-dim" style="margin:6px 0">Brak kontaktów.</p>') + '</div>' +
+      '<form data-form="addcontact" data-id="' + f.id + '" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:8px"><label style="position:absolute;left:-9999px" for="ctN">Imię i nazwisko</label><input id="ctN" class="in" placeholder="Imię i nazwisko" required><label style="position:absolute;left:-9999px" for="ctR">Stanowisko</label><input id="ctR" class="in" placeholder="Stanowisko"><label style="position:absolute;left:-9999px" for="ctP">Telefon lub e-mail</label><input id="ctP" class="in" placeholder="Telefon lub e-mail"><button class="btn">+ Dodaj osobę</button></form></div>' +
+      '<div><div class="eyebrow" style="margin:6px 0">Szanse sprzedaży · ' + leads.length + '</div><div class="list">' + (leads.length ? leads.map(function (l) { return '<div class="row"><span>' + esc(l.title) + '<br><small class="t-dim">' + STAGES[l.stage][0] + ' · ' + STAGES[l.stage][1] + '%</small></span><b class="tab" style="align-self:center">' + esc(l.value) + '</b></div>'; }).join('') : '<p class="t-dim" style="margin:6px 0">Brak szans.</p>') + '</div></div>' +
+      '<div><div class="eyebrow" style="margin:6px 0">Zlecenia · ' + orders.length + '</div><div class="list">' + (orders.length ? orders.map(function (o) { return '<div class="row"><span><b class="num">' + o.nr + '</b> ' + esc(o.product) + '</span><span class="chip" style="align-self:center">' + esc(o.stage) + '</span></div>'; }).join('') : '<p class="t-dim" style="margin:6px 0">Brak zleceń.</p>') + '</div></div>' +
+      '<button class="btn p full" data-act="addlead" data-firm="' + f.id + '">+ Dodaj lead dla tego kontrahenta</button><button class="btn full" data-act="editfirm" data-id="' + f.id + '">Edytuj dane</button><button class="btn full" data-act="close">Zamknij</button>';
+  }
+
+  /* --- formularz kontrahenta (ręcznie lub z GUS) --- */
+  function firmForm() {
+    var f = crm.ff, back = f._back === 'lead';
+    var inp = function (k, label, ph, extra) { return '<label class="t-muted" style="font-size:13px">' + label + '<input class="in" style="margin-top:4px" data-ff="' + k + '" value="' + esc(f[k] || '') + '" placeholder="' + (ph || '') + '"' + (extra || '') + '></label>'; };
+    var nipState = f.nip ? (nipOk(f.nip) ? '<small class="t-green">NIP poprawny</small>' : '<small class="t-red">Nieprawidłowy NIP – sprawdź cyfry</small>') : '';
+    var dup = f.nip && nipOk(f.nip) ? FIRMS.filter(function (x) { return x.nip === String(f.nip).replace(/[^\d]/g, '') && x.id !== f.id; })[0] : null;
+    return '<div class="grab"></div><h2>' + (f.id ? 'Edycja kontrahenta' : 'Nowy kontrahent') + '</h2>' +
+      '<section class="card" style="background:var(--surface2);display:grid;gap:8px"><b>Pobierz dane z rejestru GUS</b><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start"><label style="flex:1;min-width:180px;font-size:13px" class="t-muted">NIP<input class="in" style="margin-top:4px" data-ff="nip" inputmode="numeric" value="' + esc(f.nip || '') + '" placeholder="np. 527-171-11-06"></label><button type="button" class="btn g" style="margin-top:22px" data-act="gus">Pobierz z GUS</button></div><div id="nipState">' + nipState + '</div>' +
+      (dup ? '<div class="alert a-red" style="align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:180px">Kontrahent z tym NIP już istnieje: <b>' + esc(dup.name) + '</b>. System blokuje duplikat.</span><button type="button" class="btn" data-act="usefirm" data-id="' + dup.id + '">' + (back ? 'Wybierz go do leada' : 'Otwórz kartę') + '</button></div>' : '') +
+      (f._gus ? '<div class="alert a-green"><span class="chip c-green">GUS</span><span>' + f._gus + '</span></div>' : '') +
+      '<small class="t-dim">W docelowym systemie przez usługę GUS BIR (REGON). W demo symulacja – wpisz 123-456-32-18 (fikcyjna firma) albo 527-171-11-06 (AMIC, już w bazie).</small></section>' +
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px">' + inp('name', 'Nazwa skrócona *', 'np. SALUS Toruń', ' required') + inp('full', 'Pełna nazwa', 'np. Centrum Medyczne SALUS sp. z o.o.') + inp('regon', 'REGON') + inp('www', 'Strona www') + inp('addr', 'Ulica i numer') + inp('zip', 'Kod pocztowy', '00-000') + inp('city', 'Miejscowość') + inp('woj', 'Województwo') + '</div>' +
+      '<div><small class="t-muted">Branża</small><div class="seg" style="margin-top:4px">' + BRANZE.map(function (b) { return '<button type="button" data-act="ffset" data-k="branza" data-v="' + esc(b) + '" aria-pressed="' + (f.branza === b) + '">' + b + '</button>'; }).join('') + '</div></div>' +
+      '<div><small class="t-muted">Opiekun</small><div class="seg" style="margin-top:4px">' + OWNERS.map(function (o) { return '<button type="button" data-act="ffset" data-k="owner" data-v="' + o + '" aria-pressed="' + (f.owner === o) + '">' + o + '</button>'; }).join('') + '</div></div>' +
+      '<button class="btn p full" data-act="savefirm">' + (back ? 'Zapisz i wybierz do leada' : 'Zapisz kontrahenta') + '</button><button class="btn full" data-act="' + (back ? 'leadback' : 'close') + '">' + (back ? '← Wróć do leada' : 'Anuluj') + '</button>';
+  }
+
+  /* --- Dodaj lead --- */
+  function leadForm() {
+    var d = crm.lf, f = d.firm ? firmById(d.firm) : null;
+    var firmPart = f
+      ? '<div class="card" style="background:var(--surface2);display:flex;gap:12px;align-items:center"><span style="width:42px;height:42px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-weight:700;flex:none">' + esc(f.name.slice(0, 2).toUpperCase()) + '</span><span style="flex:1;min-width:0"><b>' + esc(f.name) + '</b><br><small class="t-muted">' + esc(f.branza) + ' · ' + esc(f.city) + (f.nip ? ' · NIP ' + nipFmt(f.nip) : '') + '</small></span><button type="button" class="btn" data-act="lfclear" style="min-height:40px">Zmień</button></div>'
+      : '<label class="t-muted" style="font-size:13px">Wyszukaj w katalogu kontrahentów<input id="lfQ" class="in" style="margin-top:4px" placeholder="Nazwa, NIP lub miasto" value="' + esc(d.q || '') + '" autocomplete="off"></label><div id="lfRes" class="list">' + lfResults(d.q || '') + '</div><button type="button" class="btn g full" data-act="newfirm" data-back="lead">+ Nowy kontrahent (ręcznie lub z GUS)</button>';
+    var people = f ? f.contacts : [];
+    return '<div class="grab"></div><h2>Dodaj lead</h2>' +
+      '<div><div class="eyebrow" style="margin-bottom:6px">1. Kontrahent</div>' + firmPart + '</div>' +
+      (f ? '<div><div class="eyebrow" style="margin-bottom:6px">2. Osoba kontaktowa</div><div class="seg">' + people.map(function (p, i) { return '<button type="button" data-act="lfset" data-k="person" data-v="' + i + '" aria-pressed="' + (String(d.person) === String(i)) + '">' + esc(p.name) + ' · ' + esc(p.role) + '</button>'; }).join('') + '<button type="button" data-act="lfset" data-k="person" data-v="new" aria-pressed="' + (d.person === 'new') + '">+ Nowa osoba</button></div>' + (d.person === 'new' ? '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px"><input class="in" data-lf="pname" value="' + esc(d.pname || '') + '" placeholder="Imię i nazwisko" aria-label="Imię i nazwisko"><input class="in" data-lf="prole" value="' + esc(d.prole || '') + '" placeholder="Stanowisko" aria-label="Stanowisko"></div>' : '') + '</div>' +
+        '<div><div class="eyebrow" style="margin-bottom:6px">3. Czego dotyczy</div><label class="t-muted" style="font-size:13px">Temat zapytania *<input class="in" style="margin-top:4px" data-lf="title" value="' + esc(d.title || '') + '" placeholder="np. Pylon przy wejściu do przychodni"></label><div class="seg" style="margin-top:8px">' + PRODUCTS.map(function (p) { return '<button type="button" data-act="lfset" data-k="prod" data-v="' + p + '" aria-pressed="' + (d.prod === p) + '">' + p + '</button>'; }).join('') + '</div></div>' +
+        '<div><div class="eyebrow" style="margin-bottom:6px">4. Źródło pozyskania</div><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">' + SOURCES.map(function (s) { var on = d.src === s; return '<button type="button" data-act="lfset" data-k="src" data-v="' + esc(s) + '" aria-pressed="' + on + '" style="display:flex;gap:10px;align-items:center;text-align:left;padding:10px;border-radius:12px;min-height:52px;border:1px solid ' + (on ? 'var(--magenta)' : 'var(--line2)') + ';background:' + (on ? 'rgba(227,0,111,.16)' : 'var(--surface2)') + ';color:var(--fg);font-size:13px"><span style="color:' + (on ? 'var(--pink)' : 'var(--muted)') + ';flex:none">' + srcIcon(s) + '</span>' + esc(s) + '</button>'; }).join('') + '</div></div>' +
+        '<div><div class="eyebrow" style="margin-bottom:6px">5. Wartość i termin</div><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px"><label class="t-muted" style="font-size:13px">Szacowana wartość (zł netto)<input class="in" style="margin-top:4px" inputmode="numeric" data-lf="value" value="' + esc(d.value || '') + '" placeholder="np. 45000"></label><label class="t-muted" style="font-size:13px">Planowane zamknięcie' + dateField('data-lf="close"', d.close || '2026-11-30', 'Planowane zamknięcie') + '</label></div><div style="margin-top:8px"><small class="t-muted">Opiekun</small><div class="seg" style="margin-top:4px">' + OWNERS.map(function (o) { return '<button type="button" data-act="lfset" data-k="owner" data-v="' + o + '" aria-pressed="' + (d.owner === o) + '">' + o + '</button>'; }).join('') + '</div></div><label class="t-muted" style="font-size:13px;display:block;margin-top:8px">Następny krok (przypomnienie)<input class="in" style="margin-top:4px" data-lf="next" value="' + esc(d.next || '') + '" placeholder="np. Zadzwonić z pytaniem o budżet – pon. 10:00"></label></div>' +
+        '<button class="btn p full" data-act="savelead">Dodaj lead do lejka (Nowe zapytanie · 10%)</button>' : '') +
+      '<button class="btn full" data-act="close">Anuluj</button>';
+  }
+  function lfResults(q) {
+    q = (q || '').toLowerCase();
+    var r = FIRMS.filter(function (f) { return !q || (f.name + ' ' + f.full + ' ' + f.nip + ' ' + f.city).toLowerCase().indexOf(q) > -1; }).slice(0, 6);
+    if (!r.length) return '<p class="t-dim" style="margin:6px 0">Nie ma takiego kontrahenta. Dodaj nowego poniżej.</p>';
+    return r.map(function (f) { return '<button type="button" class="row" data-act="pickfirm" data-id="' + f.id + '" style="background:none;border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;color:var(--fg)"><span><b style="font-weight:500">' + esc(f.name) + '</b><br><small class="t-dim">' + esc(f.branza) + ' · ' + esc(f.city) + '</small></span><small class="t-dim tab" style="align-self:center">' + (f.nip ? nipFmt(f.nip) : 'brak NIP') + '</small></button>'; }).join('');
+  }
+
+  /* --- źródła leadów --- */
+  function sourcesHtml() {
+    var rows = SOURCES.map(function (s) { var h = SRC_HIST[s] || [0, 0, 0]; var cur = LEADS.filter(function (l) { return l.source === s && l.stage < 6; }).length; return [s, h[0], h[1], h[2], cur]; }).sort(function (a, b) { return b[3] - a[3]; });
+    var maxN = Math.max.apply(null, rows.map(function (r) { return r[1]; }).concat([1]));
+    var best = rows.slice().sort(function (a, b) { return b[2] - a[2]; })[0];
+    return '<div class="kpis"><div class="kpi"><small>Leady (12 mies.)</small><b>' + rows.reduce(function (a, r) { return a + r[1]; }, 0) + '</b></div><div class="kpi"><small>Najwyższa skuteczność</small><b style="font-size:18px">' + esc(best[0]) + '</b><em class="t-green">' + best[2] + '% wygranych</em></div><div class="kpi"><small>Najwięcej sprzedaży</small><b style="font-size:18px">' + esc(rows[0][0]) + '</b><em class="t-dim">' + rows[0][3] + ' tys. zł</em></div><div class="kpi"><small>Aktywne źródła</small><b>' + SOURCES.length + '</b></div></div>' +
+      '<section class="card"><div class="h-row" style="flex-wrap:wrap"><h2>Skuteczność źródeł</h2><small class="t-dim">ostatnie 12 miesięcy · sortowanie: wartość wygranych</small></div><div class="scroll-x"><table style="width:100%;min-width:340px;border-collapse:collapse;font-size:13px"><thead><tr style="color:var(--dim);text-align:left"><th style="padding:8px 6px;font-weight:500">Źródło · liczba leadów</th><th style="padding:8px 6px;font-weight:500;text-align:right">Wygrane</th><th style="padding:8px 6px;font-weight:500;text-align:right">Sprzedaż</th><th style="padding:8px 6px;font-weight:500;text-align:right">W lejku</th></tr></thead><tbody>' +
+      rows.map(function (r) { return '<tr style="border-top:1px solid var(--line)"><td style="padding:10px 6px;width:55%"><span style="display:flex;gap:10px;align-items:center"><span style="width:34px;height:34px;border-radius:10px;background:rgba(227,0,111,.12);color:var(--pink);display:grid;place-items:center;flex:none">' + srcIcon(r[0]) + '</span><span style="flex:1;min-width:0">' + esc(r[0]) + '<span style="display:flex;gap:8px;align-items:center;margin-top:5px"><span class="bar" style="flex:1;height:6px"><i style="width:' + (r[1] / maxN * 100) + '%;background:var(--pink)"></i></span><small class="tab t-muted">' + r[1] + '</small></span></span></span></td><td style="padding:10px 6px;text-align:right"><span class="chip tab ' + (r[2] >= 30 ? 'c-green' : r[2] >= 18 ? '' : 'c-orange') + '">' + r[2] + '%</span></td><td class="tab" style="padding:10px 6px;text-align:right;white-space:nowrap">' + (r[3] ? r[3] + ' tys.' : '—') + '</td><td class="tab" style="padding:10px 6px;text-align:right">' + r[4] + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+      '<p class="t-dim" style="font-size:13px;margin:10px 0 0">Wnioski AI: polecenia i klienci stali dają 3× wyższą skuteczność niż formularz www. Leady z Google Ads warto kwalifikować przez AI Gate przed kalkulacją.</p></section>' +
+      '<section class="card"><div class="h-row"><h2>Dodaj źródło</h2></div><form data-form="addsrc" style="display:flex;gap:8px;flex-wrap:wrap"><label for="srcIn" style="position:absolute;left:-9999px">Nazwa źródła</label><input id="srcIn" class="in" style="flex:1;min-width:200px" placeholder="np. Facebook, Oferteo, Kampania mailowa"><button class="btn p">Dodaj źródło</button></form></section>';
   }
 
   VIEWS.zlecenie = {
@@ -1047,7 +1204,7 @@
   document.addEventListener('change', function (e) {
     var t = e.target;
     if (t.dataset && t.dataset.cert) { var k = t.dataset.cert.split('|'), x = byNr(k[0]); x.certs.forEach(function (c) { if (c.id === k[1] && t.value) c.to = t.value; }); saveEmp(x); render(); showEmp(x.nr, !expiredBad(x).length); if (expiredBad(x).length) toast('Uwaga: pracownik ma nieaktualne badania okresowe'); return; }
-    if (t.classList && t.classList.contains('dpick')) { var tx = t.parentNode.querySelector('.dtxt'); if (t.value) { tx.value = plDate(t.value); tx.dispatchEvent(new Event('change', { bubbles: true })); } return; }
+    if (t.classList && t.classList.contains('dpick')) { var tx = t.parentNode.querySelector('.dtxt'); if (t.value) { tx.value = plDate(t.value); tx.dispatchEvent(new Event('input', { bubbles: true })); tx.dispatchEvent(new Event('change', { bubbles: true })); } return; }
     if (t.dataset && t.dataset.certtxt) { var v = parsePl(t.value); if (!v) { toast('Wpisz datę w formacie dd.mm.rrrr, np. 01.09.2026'); return; } var kk = t.dataset.certtxt.split('|'), cx = byNr(kk[0]); cx.certs.forEach(function (c) { if (c.id === kk[1]) c.to = v; }); saveEmp(cx); render(); showEmp(cx.nr, !expiredBad(cx).length); toast(expiredBad(cx).length ? 'Uwaga: pracownik ma nieaktualne badania okresowe' : 'Zapisano datę ' + plDate(v)); return; }
     if (t.dataset && t.dataset.attach) { var ak = t.dataset.attach.split('|'), ax = byNr(ak[0]), ac = ax.certs.filter(function (c) { return c.id === ak[1]; })[0], fs = Array.prototype.slice.call(t.files || []); if (!fs.length) return; attachFiles(ax, ac, fs).then(function () { saveEmp(ax); showEmp(ax.nr, true); toast('Dodano ' + fs.length + ' plik(i) do: ' + ac.name); }); return; }
     if (t.dataset && t.dataset.size) { var z = t.dataset.size.split('|'), y = byNr(z[0]); y.sizes[z[1]] = t.value; saveEmp(y); if (cur === 'kadry' && kd.view === 'sizes') render(); toast('Rozmiar zapisany'); return; }
@@ -1059,6 +1216,14 @@
       img.src = fr.result;
     };
     fr.readAsDataURL(inp.files[0]);
+  });
+  function reSheet(html) { var sh = $('.sheet'), sc = sh ? sh.scrollTop : 0; openSheet(html); var n = $('.sheet'); if (n) n.scrollTop = sc; }
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.dataset && t.dataset.lf && crm.lf) crm.lf[t.dataset.lf] = t.value;
+    if (t.dataset && t.dataset.ff && crm.ff) { crm.ff[t.dataset.ff] = t.value; if (t.dataset.ff === 'nip') { var st = $('#nipState'), n = t.value.replace(/[^\d]/g, ''); if (st) st.innerHTML = n.length < 10 ? '' : nipOk(n) ? '<small class="t-green">NIP poprawny – możesz pobrać dane z GUS</small>' : '<small class="t-red">Nieprawidłowy NIP – sprawdź cyfry</small>'; } }
+    if (t.id === 'lfQ' && crm.lf) { crm.lf.q = t.value; var r = $('#lfRes'); if (r) r.innerHTML = lfResults(t.value); }
+    if (t.id === 'fq') { crm.fq = t.value; var fl = $('#firmList'); if (fl) { var q = t.value.toLowerCase(); fl.innerHTML = firmRows(FIRMS.filter(function (f) { return !q || (f.name + ' ' + f.full + ' ' + f.nip + ' ' + f.city + ' ' + f.branza).toLowerCase().indexOf(q) > -1; })); } }
   });
   document.addEventListener('input', function (e) {
     var t = e.target; if (!t.classList || !t.classList.contains('dtxt') || e.inputType === 'deleteContentBackward') return;
