@@ -73,6 +73,29 @@
 
   var ui = { filter: 'all', done: store.get('done', { 1: true }), lead: 388, ai: false, otab: 0, fix: null };
 
+  /* ---------- dziennik zdarzeń (co zrobił system) ---------- */
+  var closed = store.get('closed2155', null);   // { at, photos:[thumb…], note }
+  var events = store.get('events', []);
+  function nowTxt() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function logEvent(kind, who, text) { events.unshift({ kind: kind, who: who, text: text, t: nowTxt() }); events = events.slice(0, 40); store.set('events', events); }
+  var KIND = { ok: ['c-green', 'ODBIÓR'], status: ['c-pink', 'STATUS'], fv: ['c-green', 'FAKTURA'], info: ['', 'POWIAD.'], coin: ['c-orange', 'NAGRODA'], doc: ['', 'DOKUM.'] };
+  function eventsHtml(limit) {
+    if (!events.length) return '<p class="t-dim" style="margin:0">Brak zdarzeń. Zamknij montaż w aplikacji montażysty, a tutaj pojawi się wszystko, co system zrobił automatycznie.</p>';
+    return '<div class="list">' + events.slice(0, limit || 40).map(function (e) { var k = KIND[e.kind] || KIND.info; return '<div class="row" style="align-items:flex-start;justify-content:flex-start"><span class="chip ' + k[0] + '" style="flex:none;min-width:74px;justify-content:center">' + k[1] + '</span><span style="flex:1;min-width:0">' + e.text + '<br><small class="t-dim">' + e.who + '</small></span><small class="t-dim tab" style="flex:none">' + e.t + '</small></div>'; }).join('') + '</div>';
+  }
+  function closeOrder(photos, note) {
+    closed = { at: nowTxt(), photos: photos, note: note };
+    store.set('closed2155', closed);
+    var o = ORDERS[0]; o.stage = 'Zamknięte'; o.pct = 100; o.left = 'zamknięte dziś';
+    logEvent('doc', 'System → dokumentacja zlecenia, portal klienta', photos.length + ' zdjęć z montażu i protokół PDF dołączone do zlecenia 2155 i udostępnione klientowi AMIC.');
+    logEvent('coin', 'System → Ekipa A (Paweł, Łukasz, Tomek)', 'Montaż w czasie: +60 Grafficoinów dla ekipy, ranking zaktualizowany.');
+    logEvent('info', 'System → PM Robert Ś., handlowiec Agnieszka W.', 'Powiadomienie: montaż 2155 zakończony, klient podpisał protokół („' + esc(note || 'Bez uwag') + '”).');
+    logEvent('fv', 'System → księgowość', 'Można wystawić fakturę III (30%) – 20 520 zł netto. Dodano zadanie dla księgowej.');
+    logEvent('status', 'System', 'Status zlecenia 2155: Montaż → Odbiór ✓ → Do rozliczenia. Wynik zlecenia przeliczony: marża 32,6%.');
+    logEvent('ok', 'Ekipa A · aplikacja montażysty', 'Protokół odbioru 2155 podpisany przez klienta na miejscu.');
+  }
+  if (closed) { ORDERS[0].stage = 'Zamknięte'; ORDERS[0].pct = 100; ORDERS[0].left = 'zamknięte dziś'; }
+
   /* ---------- widoki ---------- */
   var VIEWS = {};
 
@@ -90,7 +113,11 @@
         r('monter', 'pin', 'Montażysta', 'Plan na mapie, instrukcja krok po kroku') +
         r('hala', 'tv', 'Monitor na hali', 'Priorytety, komunikaty, ranking') +
         '</div>' +
-        '<div class="coinrow"><img src="' + COIN + '" alt=""><span>Grafficoiny – punkty za zadania wykonane w czasie. Widoczne na tablecie i monitorach hali.</span></div>';
+        '<div class="coinrow"><img src="' + COIN + '" alt=""><span>Grafficoiny – punkty za zadania wykonane w czasie. Widoczne na tablecie i monitorach hali.</span></div>' +
+        '<button class="btn" data-act="reset" style="align-self:flex-start">Resetuj demo (przed kolejną prezentacją)</button>';
+    },
+    on: function (act) {
+      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
     }
   };
 
@@ -112,9 +139,10 @@
         '<section class="card"><div class="h-row"><h2>Twoje zadania na dziś</h2><span class="chip tab">' + cnt + ' / 5</span></div><div class="list">' +
         TASKS.map(function (t, i) { return '<button class="check' + (done[i] ? ' on' : '') + '" data-act="task" data-i="' + i + '" aria-pressed="' + !!done[i] + '"><span class="box">' + (done[i] ? '✓' : '') + '</span><span class="lbl"><span style="display:block">' + t[0] + '</span><small class="t-dim">' + t[1] + '</small></span></button>'; }).join('') +
         '</div></section>' +
-        '<section class="card"><div class="h-row"><h2>Alerty systemu</h2><span class="chip c-pink">5 wymaga reakcji</span></div><div class="grid">' +
-        ALERTS.map(function (a) { return '<div class="alert ' + a[0] + '"><span class="chip ' + a[1] + '">' + a[2] + '</span><span>' + a[3] + '</span></div>'; }).join('') +
+        '<section class="card"><div class="h-row"><h2>Alerty systemu</h2><span class="chip c-pink">' + allAlerts().length + ' wymaga reakcji</span></div><div class="grid">' +
+        allAlerts().map(function (a) { return '<div class="alert ' + a[0] + '"><span class="chip ' + a[1] + '">' + a[2] + '</span><span>' + a[3] + '</span></div>'; }).join('') +
         '</div></section></div>' +
+        (events.length ? '<section class="card"><div class="h-row"><h2>Ostatnie zdarzenia</h2><a href="#zlecenie" data-act="history" style="font-size:13px">Historia zlecenia 2155 →</a></div>' + eventsHtml(6) + '</section>' : '') +
         '<section class="card"><div class="h-row" style="flex-wrap:wrap"><h2>Zlecenia w realizacji</h2><div class="seg">' +
         [['all', 'Wszystkie'], ['proj', 'Projekt'], ['prod', 'Produkcja'], ['mont', 'Montaż'], ['late', 'Ryzyko']].map(function (f) { return '<button data-act="filter" data-f="' + f[0] + '" aria-pressed="' + (ui.filter === f[0]) + '">' + f[1] + '</button>'; }).join('') +
         '</div></div><div class="list">' +
@@ -131,8 +159,12 @@
     on: function (act, el) {
       if (act === 'task') { var i = el.dataset.i; ui.done[i] = !ui.done[i]; store.set('done', ui.done); render(); }
       if (act === 'filter') { ui.filter = el.dataset.f; render(); }
+      if (act === 'history') { ui.otab = 4; go('zlecenie'); }
     }
   };
+  function allAlerts() {
+    return closed ? [['a-green', 'c-green', 'FV', 'Zlecenie <a href="#zlecenie" data-act="history">2155</a> zamknięte, protokół podpisany – wystaw fakturę III (30%): 20 520 zł.']].concat(ALERTS) : ALERTS;
+  }
 
   VIEWS.crm = {
     title: 'CRM – lejek sprzedaży', sub: 'HANDLOWIEC',
@@ -167,23 +199,29 @@
   VIEWS.zlecenie = {
     title: 'Zlecenie 2155', sub: 'AMIC POLSKA · PYLON CENOWY',
     html: function () {
-      var S = [['Sprzedaż', 'umowa 12.10', 2], ['PM', '13.10', 2], ['Projekt', 'rys. v3', 2], ['Magazyn', '3 z 4 poz.', 1], ['Produkcja', '86%', 1], ['Montaż', '29.10', 0], ['Odbiór', 'protokół', 0], ['Faktura', 'II i III', 0]];
+      var S = closed
+        ? [['Sprzedaż', 'umowa 12.10', 2], ['PM', '13.10', 2], ['Projekt', 'rys. v3', 2], ['Magazyn', 'wydane', 2], ['Produkcja', '100%', 2], ['Montaż', 'dziś ' + closed.at, 2], ['Odbiór', 'podpisany', 2], ['Faktura', 'III do wyst.', 1]]
+        : [['Sprzedaż', 'umowa 12.10', 2], ['PM', '13.10', 2], ['Projekt', 'rys. v3', 2], ['Magazyn', '3 z 4 poz.', 1], ['Produkcja', '86%', 1], ['Montaż', '29.10', 0], ['Odbiór', 'protokół', 0], ['Faktura', 'II i III', 0]];
       var O = [['Cięcie gilotyna', 12, 10.5], ['Gięcie', 16, 14], ['Frezowanie CNC', 24, 23], ['Spawanie', 64, 71.5], ['Szlifowanie', 30, 26], ['Malowanie', 40, 38], ['Elektryka LED', 30, 22], ['Pakowanie', 6, 0]];
-      var tabs = ['Rozliczenie', 'Materiały', 'Jakość', 'Rozmowa'];
+      var tabs = ['Rozliczenie', 'Materiały', 'Jakość', 'Rozmowa', 'Historia' + (events.length ? ' (' + events.length + ')' : '')];
       var body = [
         '<div class="grid g2"><section class="card"><div class="h-row"><h2>Plan vs wykonanie</h2><small class="t-dim">szary = plan</small></div>' + O.map(function (o) { var over = o[2] > o[1]; return '<div class="op"><span>' + o[0] + '</span><span><i class="p" style="display:block;width:' + (o[1] / 72 * 100) + '%"></i><i class="r" style="display:block;width:' + (o[2] / 72 * 100) + '%;background:' + (over ? 'var(--red)' : 'var(--pink)') + '"></i></span><span class="tab ' + (over ? 't-red' : 't-muted') + '" style="text-align:right">' + String(o[2]).replace('.', ',') + ' / ' + o[1] + ' h</span></div>'; }).join('') + '</section>' +
         '<section class="card"><h2 style="font-size:17px;margin-bottom:6px">Płatności</h2><div class="list"><div class="row"><span>Zaliczka I · 30%</span><span class="t-green tab">20 520 zł ✓</span></div><div class="row"><span>II · 40% (po zdjęciach)</span><span class="t-orange tab">27 360 zł · do wystawienia</span></div><div class="row"><span>III · 30% (po odbiorze)</span><span class="t-dim tab">20 520 zł</span></div><div class="row"><span>Domówienie: blacha LPG</span><span class="t-pink tab">4 200 zł</span></div></div></section></div>',
         '<section class="card"><h2 style="font-size:17px;margin-bottom:6px">Materiały i rezerwacje (Wapro)</h2><div class="list"><div class="row"><span>Blacha Al 3 mm · 6 ark.<br><small class="t-dim">R2 / półka 4</small></span><span class="chip c-green">wydane</span></div><div class="row"><span>Profil 80×80×4 · 48 mb<br><small class="t-dim">Plac B</small></span><span class="chip c-green">wydane</span></div><div class="row"><span>Moduły LED · 220 szt.<br><small class="t-dim">Magazyn 1</small></span><span class="chip c-pink">zarezerwowane</span></div><div class="row"><span>Wyświetlacze cen LED · 4 szt.<br><small class="t-dim">dostawca</small></span><span class="chip c-orange">dostawa 26.10</span></div></div></section>',
         '<div class="grid g2"><section class="card"><h2 style="font-size:17px;margin-bottom:6px">Punkty kontroli jakości</h2><div class="list"><div class="row"><span>Cięcie i gięcie</span><span class="t-green">✓ Damian, 19.10</span></div><div class="row"><span>Spawanie konstrukcji</span><span class="t-green">✓ Artur, 21.10</span></div><div class="row"><span>Malowanie – RAL</span><span class="t-green">✓ Krzysztof, 22.10</span></div><div class="row"><span>Test LED 24 h</span><span class="t-orange">w toku</span></div></div></section>' +
         '<section class="card" style="border-color:rgba(255,90,90,.3)"><h2 style="font-size:17px;margin-bottom:6px">Karta zdarzeń krytycznych</h2><p style="margin:0;font-size:14px">Pliki do malarni wysłane w złej wersji. Działanie: blokada wysyłki plików bez statusu „aktualny”.</p><p class="t-red" style="margin:8px 0 0;font-size:14px">Koszt: 5 000 zł · zamknięte</p></section></div>',
-        '<section class="card grid"><div><small class="t-dim">Karol (technolog) · 18.10</small><div>Technologia gotowa: P1 cięcie/gięcie, P2 spawanie, malarnia, P3 elektryka.</div></div><div><small class="t-dim">Kierownik produkcji · 22.10</small><div>Konstrukcja pomalowana, czekamy na wyświetlacze cen.</div></div><div><small class="t-dim">Agnieszka W. · dziś</small><div>Klient domówił blachę LPG (+4 200 zł). Dopisane do rozliczenia.</div></div><form data-form="msg" style="display:flex;gap:8px"><label for="msgIn" class="t-dim" style="position:absolute;left:-9999px">Wiadomość</label><input id="msgIn" class="in" placeholder="Napisz do zespołu zlecenia…"><button class="btn p">Wyślij</button></form></section>'
+        '<section class="card grid"><div><small class="t-dim">Karol (technolog) · 18.10</small><div>Technologia gotowa: P1 cięcie/gięcie, P2 spawanie, malarnia, P3 elektryka.</div></div><div><small class="t-dim">Kierownik produkcji · 22.10</small><div>Konstrukcja pomalowana, czekamy na wyświetlacze cen.</div></div><div><small class="t-dim">Agnieszka W. · dziś</small><div>Klient domówił blachę LPG (+4 200 zł). Dopisane do rozliczenia.</div></div><form data-form="msg" style="display:flex;gap:8px"><label for="msgIn" class="t-dim" style="position:absolute;left:-9999px">Wiadomość</label><input id="msgIn" class="in" placeholder="Napisz do zespołu zlecenia…"><button class="btn p">Wyślij</button></form></section>',
+        '<section class="card"><div class="h-row"><h2>Co system zrobił automatycznie</h2>' + (closed ? '<span class="chip c-green">zamknięte ' + closed.at + '</span>' : '') + '</div>' +
+          (closed && closed.photos && closed.photos.length ? '<div class="thumbs" style="margin-bottom:12px">' + closed.photos.slice(0, 6).map(function (p) { return '<div style="background-image:url(' + p + ')"></div>'; }).join('') + '</div>' : '') +
+          eventsHtml() + '</section>'
       ];
-      return '<section style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="num" style="font-size:56px;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">2155</span><div style="min-width:0;flex:1"><h1 style="font-size:22px">Pylon cenowy 6 m – AMIC Łódź</h1><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><span class="chip c-green">Montaż 29.10</span><span class="chip">PM: Robert Ś.</span><span class="chip c-orange">Zdjęcia wymagane</span></div></div></section>' +
+      return '<section style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="num" style="font-size:56px;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">2155</span><div style="min-width:0;flex:1"><h1 style="font-size:22px">Pylon cenowy 6 m – AMIC Łódź</h1><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + (closed ? '<span class="chip c-green">Zamknięte · protokół podpisany</span><span class="chip c-orange">Faktura III do wystawienia</span>' : '<span class="chip c-green">Montaż 29.10</span><span class="chip c-orange">Zdjęcia wymagane</span>') + '<span class="chip">PM: Robert Ś.</span></div></div></section>' +
         '<section class="card scroll-x"><div class="steps">' + S.map(function (s) { return '<div><i style="background:' + (s[2] === 2 ? 'var(--green)' : s[2] === 1 ? 'var(--grad)' : 'rgba(255,255,255,.1)') + '"></i><b style="' + (s[2] === 0 ? 'color:var(--dim)' : '') + '">' + (s[2] === 2 ? '✓ ' : '') + s[0] + '</b><small>' + s[1] + '</small></div>'; }).join('') + '</div></section>' +
-        '<div class="kpis"><div class="kpi"><small>Wartość netto</small><b>68 400 zł</b><em class="t-dim">+ 4 200 zł domówienie</em></div><div class="kpi"><small>Godziny plan / real</small><b class="tab">240 / 226 h</b><em class="t-green">94% budżetu</em></div><div class="kpi"><small>Koszt do dziś</small><b>41 870 zł</b></div><div class="kpi"><small>Prognoza marży</small><b class="t-green">32,6%</b><em class="t-dim">plan 34%</em></div><div class="kpi"><small>Termin montażu</small><b>29.10</b><em class="t-green">za 6 dni</em></div></div>' +
+        '<div class="kpis"><div class="kpi"><small>Wartość netto</small><b>68 400 zł</b><em class="t-dim">+ 4 200 zł domówienie</em></div><div class="kpi"><small>Godziny plan / real</small><b class="tab">240 / 226 h</b><em class="t-green">94% budżetu</em></div><div class="kpi"><small>Koszt do dziś</small><b>41 870 zł</b></div><div class="kpi"><small>Prognoza marży</small><b class="t-green">32,6%</b><em class="t-dim">plan 34%</em></div>' + (closed ? '<div class="kpi"><small>Montaż</small><b>zakończony</b><em class="t-green">dziś ' + closed.at + ' · przed terminem</em></div>' : '<div class="kpi"><small>Termin montażu</small><b>29.10</b><em class="t-green">za 6 dni</em></div>') + '</div>' +
         '<div class="seg">' + tabs.map(function (t, i) { return '<button data-act="otab" data-i="' + i + '" aria-pressed="' + (ui.otab === i) + '">' + t + '</button>'; }).join('') + '</div>' + body[ui.otab] +
         '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" data-go="monter">Zlecenie montażu</button><button class="btn" data-act="share">Udostępnij klientowi</button></div>';
     },
+    mount: function () { if (ui.otab === 4) { var s = $('#view .seg'); if (s) setTimeout(function () { s.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); }, 30); } },
     on: function (act, el) {
       if (act === 'otab') { ui.otab = +el.dataset.i; render(); }
       if (act === 'share') toast('Link do portalu klienta skopiowany (demo)');
@@ -400,10 +438,28 @@
       if (act === 'demophoto') { mt.photos[mt.step] = demoPhoto(mt.step); render(); }
       if (act === 'missue') openSheet(issueSheet('Trafi do: PM zlecenia, kierownika produkcji i magazynu.', 'Pęknięta szyba wyświetlacza ceny ON po transporcie.', ['Uszkodzone', 'Brak elementu', 'Niezgodne z rysunkiem']));
       if (act === 'clearsig') { var c = $('#sig'); c.getContext('2d').clearRect(0, 0, c.width, c.height); mt.signed = false; }
-      if (act === 'sendprot') { if (!mt.signed) return toast('Poproś klienta o podpis w polu powyżej'); toast('Protokół wysłany – zlecenie 2155 zamknięte'); mt.screen = 'plan'; mt.signed = false; render(); }
+      if (act === 'sendprot') {
+        if (!mt.signed) return toast('Poproś klienta o podpis w polu powyżej');
+        var note = ($('#uwagi') || {}).value || 'Bez uwag';
+        var srcs = Object.keys(mt.photos).map(function (k) { return mt.photos[k]; });
+        Promise.all(srcs.map(thumb)).then(function (th) {
+          closeOrder(th, note);
+          mt.screen = 'plan'; mt.signed = false; ui.otab = 4;
+          go('zlecenie');
+          toast('Protokół wysłany – zobacz, co zrobił system');
+        });
+      }
     },
     photo: function (kind, url) { if (kind === 'step') { mt.photos[mt.step] = url; render(); } }
   };
+  function thumb(src) {
+    return new Promise(function (res) {
+      var img = new Image();
+      img.onload = function () { var c = document.createElement('canvas'), s = 220 / Math.max(img.width, img.height); c.width = img.width * s; c.height = img.height * s; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', .7)); };
+      img.onerror = function () { res(src); };
+      img.src = src;
+    });
+  }
   function demoPhoto(i) {
     var c = document.createElement('canvas'); c.width = 480; c.height = 320; var g = c.getContext('2d');
     var gr = g.createLinearGradient(0, 0, 0, 320); gr.addColorStop(0, '#7FA6C9'); gr.addColorStop(.7, '#C9D6E2'); gr.addColorStop(.7, '#55524E'); gr.addColorStop(1, '#3B3936'); g.fillStyle = gr; g.fillRect(0, 0, 480, 320);
@@ -439,6 +495,7 @@
     $('#nav').innerHTML = NAV.map(function (n) { return '<button data-go="' + n[0] + '"' + (cur === n[0] || (cur === 'zlecenie' && n[0] === 'pulpit') ? ' aria-current="page"' : '') + '>' + I[n[2]] + n[1] + '</button>'; }).join('');
     if (V.mount) V.mount();
     if (V.tick) V.tick();
+    if (typeof bell === 'function') bell();
   }
   function go(v) { if (!VIEWS[v]) v = 'start'; cur = v; closeSheet(); render(); window.scrollTo(0, 0); try { history.replaceState(null, '', '#' + v); } catch (e) {} }
   function openSheet(html) { $('#overlay').innerHTML = '<div class="sheet-bg" data-act="bg"><div class="sheet" role="dialog" aria-modal="true">' + html + '</div></div>'; }
@@ -451,6 +508,7 @@
     var act = a.dataset.act;
     if (act === 'bg') { if (e.target === a) closeSheet(); return; }
     if (act === 'close') return closeSheet();
+    if (act === 'history') { e.preventDefault(); ui.otab = 4; return go('zlecenie'); }
     if (act === 'toggle') { a.classList.toggle('on'); a.querySelector('.box').textContent = a.classList.contains('on') ? '✓' : ''; return; }
     if (act === 'okqc') { closeSheet(); return toast('Kontrola jakości zapisana i podpisana'); }
     if (act === 'sendissue') { if (!$('#issuePhoto').classList.contains('ok')) return toast('Dodaj zdjęcie – bez niego zgłoszenie nie zostanie wysłane'); closeSheet(); return toast('Zgłoszenie wysłane – powiadomiono odpowiedzialne osoby'); }
@@ -468,7 +526,8 @@
   });
   document.addEventListener('submit', function (e) { e.preventDefault(); if (VIEWS[cur].submit) VIEWS[cur].submit(e.target); });
   $('#homeBtn').addEventListener('click', function () { go('start'); });
-  $('#bellBtn').addEventListener('click', function () { openSheet('<div class="grab"></div><h2>Powiadomienia</h2><div class="grid">' + ALERTS.map(function (a) { return '<div class="alert ' + a[0] + '"><span class="chip ' + a[1] + '">' + a[2] + '</span><span>' + a[3] + '</span></div>'; }).join('') + '</div><button class="btn full" data-act="close">Zamknij</button>'); });
+  $('#bellBtn').addEventListener('click', function () { openSheet('<div class="grab"></div><h2>Powiadomienia</h2><div class="grid">' + allAlerts().map(function (a) { return '<div class="alert ' + a[0] + '"><span class="chip ' + a[1] + '">' + a[2] + '</span><span>' + a[3] + '</span></div>'; }).join('') + '</div>' + (events.length ? '<h2 style="font-size:17px;margin-top:6px">Ostatnie zdarzenia</h2>' + eventsHtml(6) : '') + '<button class="btn full" data-act="close">Zamknij</button>'); });
+  function bell() { var b = $('#bellBtn .badge'); if (b) b.textContent = allAlerts().length; }
   setInterval(function () { var V = VIEWS[cur]; if (V.tick) V.tick(); }, 500);
   var h = (location.hash || '').replace('#', '');
   go(VIEWS[h] ? h : 'start');
