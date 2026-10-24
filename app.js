@@ -693,6 +693,8 @@
   function genPrompt() {
     var a = agentById('leady');
     var u = 'Region: ' + gen.region + '.\nBranże: ' + (gen.branza.length ? gen.branza.join(', ') : 'dowolne') + '.\nProdukty Graffico: ' + (gen.prod.length ? gen.prod.join(', ') : 'dowolne z oferty') + '.\nLiczba leadów: do ' + a.max + '.\nFirmy już w bazie (pomiń): ' + FIRMS.map(function (f) { return f.name; }).join(', ') + '.';
+    var lc = parseLocation(gen.q);
+    if (lc) u += '\nLOKALIZACJA (stosuj ściśle): ' + (lc.radius ? lc.city.name + ' i miejscowości w promieniu ' + lc.radius + ' km' : 'wyłącznie miasto ' + lc.cities.map(function (c) { return c.name; }).join(', ') + ' w granicach administracyjnych – bez okolicznych gmin') + '. Region z kafelków ignoruj, jeśli koliduje z tą lokalizacją.';
     if (gen.q.trim()) u += '\n\n' + (gen.mode === 'rozszerz' ? 'DODATKOWE WSKAZÓWKI (rozszerz poszukiwania): ' : 'OGRANICZENIA (zawęź wyniki – stosuj ściśle): ') + gen.q.trim();
     return { system: a.prompt, user: u };
   }
@@ -723,12 +725,29 @@
   ];
   /* --- tryb demo: wyniki budowane z wyborów użytkownika (region, branże, produkty, zapytanie) --- */
   var DEMO_CITIES = {
-    'kujawsko-pomorskie': [['Toruń', 0], ['Bydgoszcz', 48], ['Włocławek', 60], ['Grudziądz', 65], ['Inowrocław', 40], ['Chełmża', 15], ['Lubicz', 10], ['Brodnica', 70]],
-    'pomorskie': [['Gdańsk', 170], ['Gdynia', 190], ['Tczew', 140], ['Starogard Gdański', 120], ['Kwidzyn', 100], ['Słupsk', 280]],
-    'wielkopolskie': [['Poznań', 150], ['Konin', 110], ['Gniezno', 110], ['Piła', 150], ['Kalisz', 190], ['Ostrów Wlkp.', 200]],
-    'mazowieckie': [['Płock', 110], ['Ciechanów', 150], ['Warszawa', 210], ['Pruszków', 220], ['Radom', 290], ['Siedlce', 300]],
-    'łódzkie': [['Kutno', 110], ['Stryków', 165], ['Zgierz', 170], ['Łódź', 180], ['Skierniewice', 200], ['Piotrków Trybunalski', 220]]
+    'kujawsko-pomorskie': [['Toruń', 53.013, 18.598], ['Bydgoszcz', 53.123, 18.008], ['Włocławek', 52.648, 19.067], ['Grudziądz', 53.484, 18.754], ['Inowrocław', 52.798, 18.261], ['Chełmża', 53.185, 18.604], ['Lubicz', 53.033, 18.756], ['Łysomice', 53.078, 18.600], ['Zławieś Wielka', 53.083, 18.330], ['Brodnica', 53.259, 19.397]],
+    'pomorskie': [['Gdańsk', 54.352, 18.646], ['Gdynia', 54.518, 18.531], ['Tczew', 54.092, 18.778], ['Starogard Gdański', 53.964, 18.530], ['Kwidzyn', 53.733, 18.930], ['Słupsk', 54.464, 17.028]],
+    'wielkopolskie': [['Poznań', 52.406, 16.925], ['Konin', 52.223, 18.251], ['Gniezno', 52.535, 17.583], ['Piła', 53.151, 16.738], ['Kalisz', 51.762, 18.091], ['Ostrów Wielkopolski', 51.655, 17.807]],
+    'mazowieckie': [['Płock', 52.546, 19.706], ['Ciechanów', 52.881, 20.620], ['Warszawa', 52.230, 21.012], ['Pruszków', 52.170, 20.810], ['Radom', 51.403, 21.147], ['Siedlce', 52.168, 22.290]],
+    'łódzkie': [['Kutno', 52.231, 19.363], ['Stryków', 51.900, 19.600], ['Zgierz', 51.855, 19.406], ['Łódź', 51.759, 19.457], ['Skierniewice', 51.955, 20.159], ['Piotrków Trybunalski', 51.405, 19.703]]
   };
+  function kmBetween(a1, o1, a2, o2) { var R = 6371, t = Math.PI / 180, dA = (a2 - a1) * t, dO = (o2 - o1) * t, h = Math.sin(dA / 2) * Math.sin(dA / 2) + Math.cos(a1 * t) * Math.cos(a2 * t) * Math.sin(dO / 2) * Math.sin(dO / 2); return Math.round(2 * R * Math.asin(Math.sqrt(h)) * 1.25); }
+  function norm(x) { return String(x).toLowerCase().replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e').replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o').replace(/ś/g, 's').replace(/[źż]/g, 'z'); }
+  function allCities() { var o = []; Object.keys(DEMO_CITIES).forEach(function (r) { DEMO_CITIES[r].forEach(function (c) { o.push({ name: c[0], lat: c[1], lon: c[2], woj: r }); }); }); return o; }
+  /* rozpoznanie lokalizacji w zapytaniu: „Toruń” = tylko miasto; „okolice Torunia” = miasto + 30 km; „do 50 km od Bydgoszczy” = promień */
+  function parseLocation(q) {
+    var nq = ' ' + norm(q) + ' ', found = [];
+    allCities().forEach(function (c) {
+      var w = norm(c.name).split(' ')[0], stem = w.length > 7 ? w.slice(0, -2) : w.length > 5 ? w.slice(0, -1) : w;
+      var re = new RegExp('[^a-z]' + stem + '[a-z]{0,4}[^a-z]');
+      var m = nq.match(re); if (m) found.push({ c: c, pos: m.index });
+    });
+    if (!found.length) return null;
+    found.sort(function (x, y) { return x.pos - y.pos; });
+    var c = found[0].c, around = /okolic|pobli[zż]|niedaleko|wok[oó]ł|w rejonie|powiat/i.test(q), m = q.match(/do\s*(\d+)\s*km\s*(od|wok[oó]ł)/i);
+    var radius = m ? +m[1] : around ? 30 : 0;
+    return { city: c, radius: radius, cities: found.map(function (f) { return f.c; }) };
+  }
   var DEMO_TPL = [
     { b: 'Paliwowa', f: 'Nowa stacja paliw przy drodze krajowej – {c}', s: 'Wydane pozwolenie na budowę stacji paliw z myjnią (BIP starostwa); otwarcie planowane na {q} 2027.', p: 'Pylon cenowy 8 m + oznakowanie wiaty', tag: ['Pylon cenowy', 'Pylon'], v: [90, 160], src: 'pozwolenie' },
     { b: 'Paliwowa', f: 'Stacja paliw – zmiana sieci i rebranding, {c}', s: 'Operator ogłosił przejęcie stacji i zmianę marki do {q} 2027.', p: 'Pylon cenowy + rebranding wiaty i dystrybutorów', tag: ['Pylon cenowy', 'Kaseton'], v: [70, 140], src: 'komunikat' },
@@ -745,8 +764,14 @@
   var KEYWORDS = [[/apte/i, 'Apteczna'], [/przychod|klinik|medycz|szpital/i, 'Medyczna'], [/hotel/i, 'Hotelarstwo'], [/stacj|paliw/i, 'Paliwowa'], [/gmin|witacz|urz[ąa]d|miast/i, 'Miasta, gminy'], [/galeri|park handl|centr(um|a) handl/i, 'Nieruchomości'], [/market|sklep|dyskont/i, 'Handlowa'], [/fabryk|hal[ai] produk|zak[łl]ad/i, 'Produkcyjna']];
   function demoSearch() {
     var a = agentById('leady'), q = gen.q || '', crit = [];
-    var regions = gen.region === 'cała Polska' ? Object.keys(DEMO_CITIES) : [gen.region];
-    crit.push('region: ' + gen.region);
+    var loc = parseLocation(q), regions = gen.region === 'cała Polska' ? Object.keys(DEMO_CITIES) : [gen.region];
+    if (loc) {
+      regions = Object.keys(DEMO_CITIES);
+      if (loc.radius) crit.push('lokalizacja: ' + loc.city.name + ' i okolice do ' + loc.radius + ' km');
+      else if (loc.cities.length > 1) crit.push('miasta: ' + loc.cities.map(function (c) { return c.name; }).join(', '));
+      else crit.push('lokalizacja: wyłącznie ' + loc.city.name);
+      if (gen.region !== 'cała Polska' && loc.city.woj !== gen.region) crit.push('miasto z zapytania zastępuje region ' + gen.region);
+    } else crit.push('region: ' + gen.region);
     var br = gen.branza.slice();
     var boost = [];
     if (gen.mode === 'rozszerz') KEYWORDS.forEach(function (k) { if (k[0].test(q)) { boost.push(k[1]); if (br.length && br.indexOf(k[1]) < 0) br.push(k[1]); crit.push((gen.branza.length ? 'dodano z zapytania: ' : 'priorytet z zapytania: ') + k[1]); } });
@@ -755,18 +780,21 @@
     if (gen.prod.length) crit.push('produkty: ' + gen.prod.join(', '));
     var minV = 0, maxKm = 0, noTender = false, m;
     if ((m = q.match(/(powy[żz]ej|ponad|min\.?|minimum|od|>)\s*(\d+[\s\d]*)\s*(tys|k|000)?/i))) { minV = +m[2].replace(/\s/g, ''); if (m[3] || minV < 1000) minV *= minV < 1000 ? 1000 : 1; crit.push('wartość ≥ ' + zl(minV)); }
-    if ((m = q.match(/do\s*(\d+)\s*km/i))) { maxKm = +m[1]; crit.push('do ' + maxKm + ' km od Torunia'); }
+    if (!loc && (m = q.match(/do\s*(\d+)\s*km/i))) { maxKm = +m[1]; crit.push('do ' + maxKm + ' km od Torunia (baza)'); }
     if (/bez\s+przetarg/i.test(q)) { noTender = true; crit.push('bez przetargów'); }
     var pool = [], n = 0;
     regions.forEach(function (r) {
       DEMO_CITIES[r].forEach(function (c, ci) {
+        var dist = loc ? kmBetween(loc.city.lat, loc.city.lon, c[1], c[2]) : 0;
+        if (loc && loc.radius && dist > loc.radius) return;
+        if (loc && !loc.radius && !loc.cities.some(function (x) { return x.name === c[0]; })) return;
         DEMO_TPL.forEach(function (t, ti) {
           n++; var sd = seed(ci * 31 + ti * 7 + r.length, 3);
-          if (sd < .3) return;
+          if (!loc && sd < .3) return;
           var val = Math.round((t.v[0] + (t.v[1] - t.v[0]) * seed(ci + ti, 5)) * 1000 / 1000) * 1000;
           var pot = val >= 100000 ? 'wysoki' : val >= 50000 ? 'średni' : 'niski';
           var qtr = ['I kwartał', 'II kwartał', 'III kwartał', 'IV kwartał'][Math.floor(seed(ci, ti) * 4)];
-          pool.push({ firma: t.f.replace('{c}', c[0]) + ' (przykład)', miasto: c[0], wojewodztwo: r, branza: t.b, sygnal: t.s.replace('{q}', qtr), produkt: t.p, potencjal: pot, wartosc_szac: val, zrodlo_url: '', _km: c[1], _tag: t.tag, _src: t.src });
+          pool.push({ firma: t.f.replace('{c}', c[0]) + ' (przykład)', miasto: c[0] + (loc && loc.radius && dist ? ' (' + dist + ' km)' : ''), wojewodztwo: r, branza: t.b, sygnal: t.s.replace('{q}', qtr), produkt: t.p, potencjal: pot, wartosc_szac: val, zrodlo_url: '', _km: kmBetween(53.013, 18.598, c[1], c[2]), _tag: t.tag, _src: t.src });
         });
       });
     });
