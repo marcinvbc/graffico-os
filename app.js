@@ -650,7 +650,7 @@
     var res = '';
     if (gen.busy) res = '<div class="card" style="background:var(--surface2);display:flex;gap:12px;align-items:center"><span class="spin" aria-hidden="true"></span><span>Agent przeszukuje sieć' + (gen.live ? ' (' + esc(m.name) + ' + web_search)' : ' (tryb demo)') + '…</span></div>';
     else if (gen.err) res = '<div class="alert a-red">' + esc(gen.err) + '</div>';
-    if (gen.res && !gen.busy) res += '<div class="h-row" style="margin:0"><b>Znalezione leady · ' + gen.res.length + '</b><span class="chip ' + (gen.live ? 'c-green' : 'c-orange') + '">' + (gen.live ? 'wyniki z internetu' : 'przykładowe wyniki – tryb demo') + '</span></div>' + gen.res.map(function (r, i) {
+    if (gen.res && !gen.busy) res += '<div class="h-row" style="margin:0"><b>Znalezione leady · ' + gen.res.length + (gen.found > gen.res.length ? ' z ' + gen.found : '') + '</b><span class="chip ' + (gen.live ? 'c-green' : 'c-orange') + '">' + (gen.live ? 'wyniki z internetu' : 'przykładowe wyniki – tryb demo') + '</span></div>' + (gen.crit && !gen.live ? '<div style="display:flex;gap:6px;flex-wrap:wrap"><small class="t-dim" style="width:100%">Zastosowane kryteria:</small>' + gen.crit.map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join('') + '</div>' : '') + (gen.res.length ? '' : '<div class="alert a-orange">Brak leadów dla tych kryteriów. Poszerz region, usuń część branż lub produktów albo złagodź zawężenie.</div>') + gen.res.map(function (r, i) {
       var pot = { wysoki: 'c-green', 'średni': '', niski: 'c-orange' }[r.potencjal] || '';
       return '<div class="card" style="background:var(--surface2);display:grid;gap:6px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><b>' + esc(r.firma) + '</b><span class="chip ' + pot + '">potencjał: ' + esc(r.potencjal || '—') + '</span></div><small class="t-muted">' + esc([r.miasto, r.wojewodztwo, r.branza].filter(Boolean).join(' · ')) + '</small><span style="font-size:14px">' + esc(r.sygnal || '') + '</span><small class="t-dim">Sugerowany produkt: ' + esc(r.produkt || '—') + (r.wartosc_szac ? ' · szac. ' + zl(+r.wartosc_szac) : '') + '</small>' + (r.zrodlo_url ? '<a href="' + esc(r.zrodlo_url) + '" target="_blank" rel="noopener" style="font-size:12px;word-break:break-all">' + esc(r.zrodlo_url) + '</a>' : '') +
         '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (r._added ? '<span class="chip c-green">dodano do lejka</span>' : '<button type="button" class="btn p" style="min-height:40px;font-size:13px" data-act="gadd" data-i="' + i + '">Dodaj jako lead</button><button type="button" class="btn" style="min-height:40px;font-size:13px" data-act="gdrop" data-i="' + i + '">Odrzuć</button>') + '</div></div>';
@@ -669,11 +669,75 @@
     { firma: 'Park handlowy – rebranding najemców (przykład)', miasto: 'Bydgoszcz', wojewodztwo: 'kujawsko-pomorskie', branza: 'Nieruchomości', sygnal: 'Komunikat zarządcy o modernizacji parku i nowych najemcach od wiosny 2027.', produkt: 'Pylon totem + kasetony LED najemców', potencjal: 'wysoki', wartosc_szac: 180000, zrodlo_url: '' },
     { firma: 'Hotel przy autostradzie A1 – otwarcie (przykład)', miasto: 'Włocławek', wojewodztwo: 'kujawsko-pomorskie', branza: 'Hotelarstwo', sygnal: 'Inwestycja w trakcie budowy, otwarcie zapowiedziane na jesień 2027.', produkt: 'Litery 3D na elewacji + pylon przy zjeździe', potencjal: 'niski', wartosc_szac: 70000, zrodlo_url: '' }
   ];
+  /* --- tryb demo: wyniki budowane z wyborów użytkownika (region, branże, produkty, zapytanie) --- */
+  var DEMO_CITIES = {
+    'kujawsko-pomorskie': [['Toruń', 0], ['Bydgoszcz', 48], ['Włocławek', 60], ['Grudziądz', 65], ['Inowrocław', 40], ['Chełmża', 15], ['Lubicz', 10], ['Brodnica', 70]],
+    'pomorskie': [['Gdańsk', 170], ['Gdynia', 190], ['Tczew', 140], ['Starogard Gdański', 120], ['Kwidzyn', 100], ['Słupsk', 280]],
+    'wielkopolskie': [['Poznań', 150], ['Konin', 110], ['Gniezno', 110], ['Piła', 150], ['Kalisz', 190], ['Ostrów Wlkp.', 200]],
+    'mazowieckie': [['Płock', 110], ['Ciechanów', 150], ['Warszawa', 210], ['Pruszków', 220], ['Radom', 290], ['Siedlce', 300]],
+    'łódzkie': [['Kutno', 110], ['Stryków', 165], ['Zgierz', 170], ['Łódź', 180], ['Skierniewice', 200], ['Piotrków Trybunalski', 220]]
+  };
+  var DEMO_TPL = [
+    { b: 'Paliwowa', f: 'Nowa stacja paliw przy drodze krajowej – {c}', s: 'Wydane pozwolenie na budowę stacji paliw z myjnią (BIP starostwa); otwarcie planowane na {q} 2027.', p: 'Pylon cenowy 8 m + oznakowanie wiaty', tag: ['Pylon cenowy', 'Pylon'], v: [90, 160], src: 'pozwolenie' },
+    { b: 'Paliwowa', f: 'Stacja paliw – zmiana sieci i rebranding, {c}', s: 'Operator ogłosił przejęcie stacji i zmianę marki do {q} 2027.', p: 'Pylon cenowy + rebranding wiaty i dystrybutorów', tag: ['Pylon cenowy', 'Kaseton'], v: [70, 140], src: 'komunikat' },
+    { b: 'Medyczna', f: 'Przychodnia specjalistyczna – rozbudowa, {c}', s: 'Ogłoszony przetarg na rozbudowę budynku; w zakresie oznakowanie zewnętrzne i informacja wizualna.', p: 'Pylon informacyjny + litery 3D', tag: ['Pylon', 'Litery 3D'], v: [35, 80], src: 'przetarg' },
+    { b: 'Medyczna', f: 'Nowe centrum medyczne – {c}', s: 'Inwestor rozpoczął budowę; otwarcie zapowiedziane na {q} 2027.', p: 'Litery 3D + kasetony LED + pylon przy wjeździe', tag: ['Litery 3D', 'Kaseton', 'Pylon'], v: [50, 110], src: 'pozwolenie' },
+    { b: 'Handlowa', f: 'Nowy market sieci handlowej – {c}', s: 'Pozwolenie na budowę marketu z parkingiem; otwarcie {q} 2027.', p: 'Pylon reklamowy + kasetony LED', tag: ['Pylon', 'Kaseton'], v: [60, 130], src: 'pozwolenie' },
+    { b: 'Miasta, gminy', f: 'Gmina {c} – witacze przy drogach wjazdowych', s: 'W budżecie na 2027 zapisano zadanie „witacze i tablice promocyjne”; przetarg planowany w I kwartale.', p: 'Witacze 4 szt. z podświetleniem', tag: ['Witacz'], v: [40, 90], src: 'przetarg' },
+    { b: 'Miasta, gminy', f: 'Urząd – oznakowanie nowego budynku, {c}', s: 'Zakończenie budowy siedziby urzędu w {q} 2027; zapytanie ofertowe na oznakowanie.', p: 'Litery 3D na elewacji + tablice informacyjne', tag: ['Litery 3D'], v: [25, 60], src: 'przetarg' },
+    { b: 'Nieruchomości', f: 'Park handlowy – modernizacja i nowi najemcy, {c}', s: 'Zarządca ogłosił modernizację i nowych najemców od wiosny 2027.', p: 'Pylon totem + kasetony LED najemców', tag: ['Oznakowanie CH', 'Pylon', 'Kaseton'], v: [120, 220], src: 'komunikat' },
+    { b: 'Produkcyjna', f: 'Nowa hala produkcyjna – {c}', s: 'Inwestor kończy budowę hali; przeprowadzka zakładu w {q} 2027.', p: 'Litery 3D na elewacji + pylon przy wjeździe', tag: ['Litery 3D', 'Pylon'], v: [45, 95], src: 'pozwolenie' },
+    { b: 'Hotelarstwo', f: 'Hotel – otwarcie, {c}', s: 'Obiekt w budowie, otwarcie zapowiedziane na {q} 2027.', p: 'Litery 3D + pylon przy zjeździe', tag: ['Litery 3D', 'Pylon'], v: [55, 100], src: 'komunikat' },
+    { b: 'Apteczna', f: 'Sieć aptek – nowe punkty, {c}', s: 'Sieć ogłosiła otwarcie kolejnych aptek w regionie w 2027.', p: 'Kasetony LED + krzyże apteczne', tag: ['Kaseton'], v: [15, 40], src: 'komunikat' }
+  ];
+  var KEYWORDS = [[/apte/i, 'Apteczna'], [/przychod|klinik|medycz|szpital/i, 'Medyczna'], [/hotel/i, 'Hotelarstwo'], [/stacj|paliw/i, 'Paliwowa'], [/gmin|witacz|urz[ąa]d|miast/i, 'Miasta, gminy'], [/galeri|park handl|centr(um|a) handl/i, 'Nieruchomości'], [/market|sklep|dyskont/i, 'Handlowa'], [/fabryk|hal[ai] produk|zak[łl]ad/i, 'Produkcyjna']];
+  function demoSearch() {
+    var a = agentById('leady'), q = gen.q || '', crit = [];
+    var regions = gen.region === 'cała Polska' ? Object.keys(DEMO_CITIES) : [gen.region];
+    crit.push('region: ' + gen.region);
+    var br = gen.branza.slice();
+    var boost = [];
+    if (gen.mode === 'rozszerz') KEYWORDS.forEach(function (k) { if (k[0].test(q)) { boost.push(k[1]); if (br.length && br.indexOf(k[1]) < 0) br.push(k[1]); crit.push((gen.branza.length ? 'dodano z zapytania: ' : 'priorytet z zapytania: ') + k[1]); } });
+    if (gen.mode === 'zawez' && !br.length) KEYWORDS.forEach(function (k) { if (k[0].test(q) && /tylko/i.test(q)) { br.push(k[1]); crit.push('tylko: ' + k[1]); } });
+    if (br.length) crit.push('branże: ' + br.join(', '));
+    if (gen.prod.length) crit.push('produkty: ' + gen.prod.join(', '));
+    var minV = 0, maxKm = 0, noTender = false, m;
+    if ((m = q.match(/(powy[żz]ej|ponad|min\.?|minimum|od|>)\s*(\d+[\s\d]*)\s*(tys|k|000)?/i))) { minV = +m[2].replace(/\s/g, ''); if (m[3] || minV < 1000) minV *= minV < 1000 ? 1000 : 1; crit.push('wartość ≥ ' + zl(minV)); }
+    if ((m = q.match(/do\s*(\d+)\s*km/i))) { maxKm = +m[1]; crit.push('do ' + maxKm + ' km od Torunia'); }
+    if (/bez\s+przetarg/i.test(q)) { noTender = true; crit.push('bez przetargów'); }
+    var pool = [], n = 0;
+    regions.forEach(function (r) {
+      DEMO_CITIES[r].forEach(function (c, ci) {
+        DEMO_TPL.forEach(function (t, ti) {
+          n++; var sd = seed(ci * 31 + ti * 7 + r.length, 3);
+          if (sd < .3) return;
+          var val = Math.round((t.v[0] + (t.v[1] - t.v[0]) * seed(ci + ti, 5)) * 1000 / 1000) * 1000;
+          var pot = val >= 100000 ? 'wysoki' : val >= 50000 ? 'średni' : 'niski';
+          var qtr = ['I kwartał', 'II kwartał', 'III kwartał', 'IV kwartał'][Math.floor(seed(ci, ti) * 4)];
+          pool.push({ firma: t.f.replace('{c}', c[0]) + ' (przykład)', miasto: c[0], wojewodztwo: r, branza: t.b, sygnal: t.s.replace('{q}', qtr), produkt: t.p, potencjal: pot, wartosc_szac: val, zrodlo_url: '', _km: c[1], _tag: t.tag, _src: t.src });
+        });
+      });
+    });
+    var res = pool.filter(function (x) {
+      if (br.length && br.indexOf(x.branza) < 0) return false;
+      if (gen.prod.length && !gen.prod.some(function (p) { return x._tag.indexOf(p) > -1; })) return false;
+      if (minV && x.wartosc_szac < minV) return false;
+      if (maxKm && x._km > maxKm) return false;
+      if (noTender && x._src === 'przetarg') return false;
+      if (FIRMS.some(function (f) { return f.name === x.firma; })) return false;
+      return true;
+    });
+    var rank = { wysoki: 0, 'średni': 1, niski: 2 };
+    res.sort(function (a1, b1) { var ba = boost.indexOf(a1.branza) > -1 ? 0 : 1, bb = boost.indexOf(b1.branza) > -1 ? 0 : 1; return ba - bb || rank[a1.potencjal] - rank[b1.potencjal] || b1.wartosc_szac - a1.wartosc_szac; });
+    if (boost.length) { var top = res.slice(0, a.max), mixed = top.filter(function (x) { return boost.indexOf(x.branza) > -1; }).slice(0, Math.ceil(a.max * .6)); res = mixed.concat(res.filter(function (x) { return mixed.indexOf(x) < 0 && boost.indexOf(x.branza) < 0; })); }
+    gen.crit = crit; gen.found = res.length;
+    return res.slice(0, a.max);
+  }
   function runGen() {
     var a = agentById('leady'), m = modelById(a.model), p = genPrompt();
     gen.busy = true; gen.err = ''; gen.res = null; gen.live = !!m.key; reSheet(genSheet());
     var done = function () { gen.busy = false; reSheet(genSheet()); };
-    if (!m.key) { setTimeout(function () { gen.res = DEMO_LEADS.slice(0, a.max).map(function (x) { return JSON.parse(JSON.stringify(x)); }); if (gen.mode === 'zawez' && /50/.test(gen.q)) gen.res = gen.res.filter(function (r) { return r.wartosc_szac >= 50000; }); done(); }, 1600); return; }
+    if (!m.key) { setTimeout(function () { gen.res = demoSearch(); done(); }, 1400); return; }
     callModel(m, p.system, p.user, a.web, 6000).then(function (j) {
       var text = (j.content || []).filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('\n');
       var mt = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\[[\s\S]*\])/);
