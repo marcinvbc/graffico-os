@@ -126,10 +126,11 @@
         r('ustawienia', 'gear', 'Administrator', 'Ustawienia: agenci AI, modele LLM, integracje') +
         '</div>' +
         
+        '<section class="card grid" style="gap:8px"><b>📱 Prezentacja na tablecie / telefonie</b><small class="t-dim">Pokaż kod QR i zeskanuj go drugim urządzeniem – widok otworzy się bez klikania.</small><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="qrv" data-v="hala">QR · Monitor na hali</button><button class="btn" data-act="qrv" data-v="monter">QR · Aplikacja montażysty</button><button class="btn" data-act="qrv" data-v="stanowisko">QR · Monitor gniazda</button></div></section>' +
         '<button class="btn" data-act="reset" style="align-self:flex-start">Resetuj demo (przed kolejną prezentacją)</button>';
     },
     on: function (act) {
-      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms', 'models', 'agents', 'push', 'pts', 'chat', 'rules', 'sitesAdd', 'proj', 'portal', 'carcfg', 'nd', 'role', 'toklim', 'usage', 'pmp', 'derr', 'drules', 'dpts', 'prd', 'dt', 'rcplog', 'rcpcfg', 'mtt', 'snwc', 'snseen', 'mat', 'mdoc', 'pos', 'kompl', 'ship', 'qcrec', 'ncr', 'rek', 'leave', 'bhpi', 'trainp', 'gclog', 'ratek', 'fs', 'fsp', 'fz', 'fincfg', 'fnclosed', 'bistate', 'alr', 'pusers', 'pdoc', 'pdec', 'pmsg', 'pnot'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
+      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms', 'models', 'agents', 'push', 'pts', 'chat', 'rules', 'sitesAdd', 'proj', 'portal', 'carcfg', 'nd', 'role', 'toklim', 'usage', 'pmp', 'derr', 'drules', 'dpts', 'prd', 'dt', 'rcplog', 'rcpcfg', 'mtt', 'snwc', 'snseen', 'mat', 'mdoc', 'pos', 'kompl', 'ship', 'qcrec', 'ncr', 'rek', 'leave', 'bhpi', 'trainp', 'gclog', 'ratek', 'fs', 'fsp', 'fz', 'fincfg', 'fnclosed', 'bistate', 'alr', 'pusers', 'pdoc', 'pdec', 'pmsg', 'pnot', 'rpok', 'rpsig'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
     }
   };
 
@@ -140,7 +141,7 @@
       var rows = ORDERS.filter(function (o) { return ui.filter === 'all' || (ui.filter === 'late' ? (o.late || o.ok < 0) : o.g === ui.filter); });
       var stc = { mont: 'c-green', prod: 'c-orange', proj: 'c-pink' };
       return '<section class="hero"><h1>Dzień dobry, Marcin</h1></section>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="pjgo" data-t="lista">Projekty – proces end-to-end</button><button class="btn" data-act="pjgo" data-t="kontroling">Kontroling efektywności</button><button class="btn p" data-go="bi">📊 Controlling i BI</button><button class="btn" data-go="finanse">💰 Finanse i cash flow</button><button class="btn" data-act="goals">Założenia cyfryzacji ✓</button></div>' + botCard() +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="pjgo" data-t="lista">Projekty – proces end-to-end</button><button class="btn" data-act="pjgo" data-t="kontroling">Kontroling efektywności</button><button class="btn p" data-go="bi">📊 Controlling i BI</button><button class="btn" data-go="finanse">💰 Finanse i cash flow</button><button class="btn" data-act="goals">Założenia cyfryzacji ✓</button><button class="btn p" data-act="zalog">Założenia ogólne ✓</button></div>' + botCard() +
         '<div class="kpis">' +
         '<div class="kpi"><small>Oferty otwarte</small><b>6,20 mln zł</b><em class="t-green">38 aktywnych</em></div>' +
         '<div class="kpi"><small>Sprzedaż – październik</small><b>568 tys. zł</b><div class="bar" style="margin-top:8px"><i style="width:71%"></i></div><em class="t-muted">71% planu</em></div>' +
@@ -6378,6 +6379,158 @@ return qrcode;
   AGDEMO.portal = function () { var u = pUser(), P = pProjs(u); return '<b>Przykład: „Kiedy montaż?” (' + esc(u.name) + ')</b>' + li(P.map(function (p) { var h = (PHARM[p.nr] || []).filter(function (x) { return /Montaż/.test(x[0]) && !x[2]; })[0]; return p.nr + ': ' + (h ? 'montaż zaplanowany na ' + h[1] + (decOpen(p.nr).length ? ' – pod warunkiem decyzji: ' + decOpen(p.nr).map(function (d) { return d.t; }).join(', ') : '') : 'montaż zakończony'); })) + '<p style="margin:4px 0" class="t-dim">Asystent widzi tylko dane klienta ' + esc(fname(u.firm)) + '.</p>'; };
   AGDEMO.uwagi = function () { var r = AGDATA.uwagi(); return '<b>Uwagi klientów</b>' + li(r.map(function (c) { var zm = /potrzebujemy|dochodzi|dodatkow|zmian/i.test(c.uwaga); return esc(c.zlecenie) + ' · ' + esc(c.dokument) + (c.element ? ' [' + esc(c.element) + ']' : '') + ': „' + esc(c.uwaga) + '” → <b>' + (zm ? 'zmiana zakresu – wycena i aneks (handlowiec)' : 'poprawka w ramach umowy (projektant)') + '</b>' + (c.odpowiedz ? ' · <span class="t-green">odpowiedziano</span>' : ' · <span class="t-orange">czeka na odpowiedź</span>'); })); };
 
+  /* ================= Założenia ogólne klienta – weryfikacja z przyciskami „Pokaż” ================= */
+  var ZAL = [
+    ['1. Portal klienta – założenia dodatkowe', [
+      ['Decyzje klientów aktualizują procesy, uruchamiają zadania, powiadamiają', 'part', 'W pełni dla akceptacji projektu v3 (SALUS): zdejmuje blokadę etapu, zamyka zadanie PM, wiadomość do PM i handlowca. Pozostałe decyzje: wpis w historii projektu i komunikatorze.', 'Wspólny mechanizm dla każdej decyzji: zmiana harmonogramu + nowe zadanie z właścicielem.', [['Decyzje w portalu', 'pp:decyzje'], ['Blokada etapu 2171', 'proj:2171:przeglad']]],
+      ['Dostęp ograniczony – bez danych poufnych, kosztów i marż', 'part', 'Klient widzi tylko swoje projekty, lokalizacje i dokumenty; koszty i marże nie trafiają do portalu; role: administrator, akceptujący, obserwator.', 'Wymuszenie uprawnień na serwerze (dziś w przeglądarce).', [['Uprawnienia', 'pp:users']]],
+      ['Szybsze akceptacje, mniej korespondencji, jedna wersja, pełna historia', 'ok', 'Akceptacja jednym kliknięciem z zapisem osoby i daty, komunikator przy projekcie, wersje dokumentów, historia od projektu po gwarancję.', '', [['Historia uzgodnień', 'pp:historia'], ['Dokumentacja i wersje', 'pp:dokumenty'], ['Odbiór i gwarancja', 'pp:odbior']]]
+    ]],
+    ['2. Automatyzacja i AI', [
+      ['Automatyczny obieg danych, dokumentów, powiadomień i raportów', 'part', 'System sam przypomina i eskaluje, przekazuje sprzedaż → PM, wyzwala faktury, liczy koszty zleceń z RCP, przygotowuje raport tygodniowy.', 'Wysyłka e-mail/SMS, KSeF i bank na żywo (dziś symulacja).', [['Mój dzień – system pcha', 'crm:dzien'], ['Finanse – do zrobienia', 'fin:pulpit'], ['Raport tygodniowy AI', 'ag:raport']]],
+      ['Analiza projektów historycznych, wsparcie kalkulacji ofert', 'part', 'Asystent kalkulacji, kwalifikacja leadów (AI Gate), agent dobrych praktyk, analizy w Pythonie.', 'Import historii rozliczeń z Excela.', [['Analityk AI (Python)', 'bi:python'], ['Agent kalkulacji', 'agent:kalk'], ['Procedury i normy', 'procs']]],
+      ['Prognozowanie kosztów, terminów i marż', 'ok', 'Prognoza kosztu i marży każdego zlecenia, terminy z planisty APS, cash flow 8 tygodni ze scenariuszem pesymistycznym.', 'Model uczony na historii – po zebraniu danych.', [['Kontroling', 'ctrl'], ['Prognoza APS', 'pd:prognoza'], ['Cash flow', 'fin:cash']]],
+      ['Wykrywanie opóźnień, ryzyk, błędów i braków materiałowych', 'ok', 'Czerwone flagi, alerty controllingu, braki z MRP, podwójna kontrola dokumentacji, blokady startu operacji.', '', [['Dashboard PM', 'pvt:dashboard'], ['Alerty', 'bi:alerty'], ['Alerty magazynu', 'mg:alerty']]],
+      ['Inteligentne wyszukiwanie w dokumentacji i bazie wiedzy', 'part', 'Asystent GRAFFI odpowiada z danych systemu i graffico.pl, z linkami do danych.', 'Wyszukiwanie w treści plików (PDF, rysunki, procedury).', [['Asystent GRAFFI', 'bot']]],
+      ['Rozbudowa: planowanie produkcji, IoT, cyfrowa kontrola jakości', 'part', 'Planista APS ✓, cyfrowa kontrola jakości z odbiorami ✓, chipy RCP i monitory stanowisk.', 'Sygnały z maszyn (praca / postój automatycznie).', [['APS', 'pd:prognoza'], ['Kontrola jakości', 'jk:kontrole'], ['Monitor gniazda', 'view:stanowisko']]]
+    ]],
+    ['3. Mechanizmy wspólne', [
+      ['Komunikacja: komentarze, ustalenia, historia decyzji', 'ok', 'Komunikator CRM i projektów, komentarze do dokumentów, decyzje PM, historia w portalu.', '', [['Komunikator', 'crm:czat'], ['Decyzje projektu', 'proj:2171:decyzje']]],
+      ['Zadania: przydział, przypomnienia, terminy, eskalacje', 'ok', 'Zadania z szablonów procesu, przypomnienia, eskalacja do przełożonego; obsadę podpowiada AI.', 'Automatyczny przydział wg dostępności (dziś rekomendacja agenta).', [['Zadania projektu', 'proj:2161:zadania'], ['Obsada i obciążenie', 'kv:obciazenie']]],
+      ['Red flagi', 'ok', 'Projekty, BI, magazyn, cash flow, należności, terminy APS.', '', [['Czerwone flagi', 'pvt:dashboard'], ['Alerty BI', 'bi:alerty']]],
+      ['Kontrola jakości: checklisty, podwójna weryfikacja, zatwierdzenia', 'ok', 'Double check i zwolnienie dokumentacji, odbiory międzyoperacyjne, bramki etapów.', '', [['Dokumentacja (double check)', 'pvt:dokumentacja'], ['Odbiory', 'jk:kontrole']]],
+      ['Grywalizacja: cele, wskaźniki, motywacja', 'ok', 'Grafficoiny naliczane z danych, ranking, rywalizacja zespołów, nagrody, cele w CRM.', '', [['Grafficoiny', 'kv:coins'], ['Monitor hali', 'view:hala']]],
+      ['Spójność danych – jedna baza bez przepisywania', 'part', 'Wspólny model danych modułów; eksport całego modelu.', 'Integracje Wapro, FK, KSeF, RCP; porządki w danych demo.', [['Model danych', 'bi:raporty'], ['Integracje', 'st:integracje']]],
+      ['Bezpieczeństwo i mobilność', 'part', 'Telefon i komputer, widoki wg roli, wersje i historia, limity tokenów AI per użytkownik.', 'Logowanie, uprawnienia na serwerze, kopie zapasowe, pełny rejestr zmian.', [['Limity i zużycie AI', 'st:modele'], ['Uprawnienia klientów', 'pp:users']]]
+    ]],
+    ['4. Efekt biznesowy – odpowiedzi na kluczowe pytania', [
+      ['Co realizujemy i dla kogo', 'ok', 'Lista projektów, mapa realizacji, portfel w BI.', '', [['Projekty', 'pvt:lista'], ['Mapa realizacji', 'mapa']]],
+      ['Na jakim etapie i kto odpowiada', 'ok', 'Proces 15 etapów z właścicielem etapu, PM i zadaniami.', '', [['Dashboard PM', 'pvt:dashboard'], ['Projekt 2155', 'proj:2155:przeglad']]],
+      ['Jakie są terminy', 'ok', 'Harmonogram projektu, APS, opóźnienia.', '', [['Harmonogram', 'proj:2161:harmonogram'], ['Opóźnienia', 'pd:prognoza']]],
+      ['Koszty i przewidywana marża', 'ok', 'Budżet w 5 kategoriach, marża wg zlecenia / klienta / PM.', '', [['Budżet vs wykonanie', 'bi:budzet'], ['Marża', 'bi:marza']]],
+      ['Zagrożenia', 'ok', 'Alerty i czerwone flagi z właścicielem i działaniem.', '', [['Alerty', 'bi:alerty']]],
+      ['Więcej projektów bez wzrostu administracji', 'part', 'Ewidencja czasu automatycznie (−1,5–1,75 h dziennie), brak przepisywania, szybsze akceptacje.', 'Pomiar „przed” i „po” wdrożeniu.', [['Oszczędności czasu', 'ctrl']]]
+    ]],
+    ['5. Do wersji produkcyjnej', [
+      ['Serwer, baza danych, logowanie, kopie zapasowe, rejestr zmian', 'no', 'Prototyp działa w przeglądarce (dane lokalne).', 'Backend z uprawnieniami po stronie serwera; klucze API tylko na serwerze.', []],
+      ['Integracje na żywo', 'no', 'Konfiguracja przygotowana w Ustawieniach.', 'Wapro Mag, system FK i RCP (do potwierdzenia przez klienta), KSeF, bank, CAD, e-mail/SMS.', [['Integracje', 'st:integracje']]],
+      ['Migracja danych z Excela i prawdziwe stawki', 'no', 'Szablon importu opisany w BI.', 'Historia zleceń, stawki maszyn i rbh, koszty stałe.', [['Model danych', 'bi:raporty']]],
+      ['RODO dla kartotek', 'no', 'Kartoteki zawierają PESEL i dane o badaniach.', 'Zasady dostępu, retencji, rejestr przetwarzania.', [['Kartoteki', 'kv:list']]],
+      ['Tryb offline dla montażystów', 'no', 'Aplikacja montażysty działa online.', 'Praca przy słabym zasięgu z synchronizacją.', [['Aplikacja montażysty', 'view:monter']]]
+    ]]
+  ];
+  var ZST = { ok: ['✓ jest', 'c-green'], part: ['◐ częściowo', 'c-orange'], no: ['○ brak', 'c-red'] };
+  function zalSheet() {
+    var all = [].concat.apply([], ZAL.slice(0, 4).map(function (s) { return s[1]; })), cnt = function (k) { return all.filter(function (r) { return r[1] === k; }).length; };
+    return '<div class="grab"></div><h2>Założenia ogólne klienta ✓</h2><p class="t-muted" style="margin:0;font-size:14px">Weryfikacja prototypu GRAFFI Flow wobec założeń ogólnych. „Pokaż” przenosi do miejsca w systemie.</p><div class="kpis" style="margin:0"><div class="kpi" style="padding:10px"><small>Jest</small><b class="t-green">' + cnt('ok') + '</b></div><div class="kpi" style="padding:10px"><small>Częściowo</small><b class="t-orange">' + cnt('part') + '</b></div><div class="kpi" style="padding:10px"><small>Do produkcji</small><b class="t-red">' + ZAL[4][1].length + '</b></div></div>' +
+      ZAL.map(function (s) { return '<div><div class="eyebrow" style="margin:10px 0 4px">' + esc(s[0]) + '</div><div class="list">' + s[1].map(function (r) { var z = ZST[r[1]]; return '<div style="padding:10px 0;border-bottom:1px solid var(--line);display:grid;gap:5px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><b style="font-weight:500">' + esc(r[0]) + '</b><span class="chip ' + z[1] + '" style="flex:none">' + z[0] + '</span></div><small class="t-muted">' + esc(r[2]) + '</small>' + (r[3] ? '<small class="t-orange">Brakuje: ' + esc(r[3]) + '</small>' : '') + (r[4].length ? '<div style="display:flex;gap:6px;flex-wrap:wrap">' + r[4].map(function (b) { return '<button class="btn" style="min-height:32px;font-size:12px" data-act="zggo" data-t="' + b[1] + '">Pokaż: ' + esc(b[0]) + '</button>'; }).join('') + '</div>' : '') + '</div>'; }).join('') + '</div></div>'; }).join('') + '<button class="btn full" data-act="close">Zamknij</button>';
+  }
+  function zalBack(on) { var b = $('#zalBack'); if (!on) { if (b) b.remove(); return; } if (!b) { b = document.createElement('button'); b.id = 'zalBack'; b.setAttribute('data-act', 'zalback'); b.className = 'btn p'; b.style.cssText = 'position:fixed;left:16px;bottom:96px;z-index:29;min-height:40px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.4)'; b.textContent = '‹ Założenia'; document.body.appendChild(b); } }
+  function zgGo(t) {
+    var p = t.split(':'); closeSheet(); zalBack(true);
+    if (p[0] === 'mapa') { go('pulpit'); return setTimeout(function () { var mm = $('.geomap'); if (mm) mm.scrollIntoView({ block: 'center' }); }, 80); }
+    if (p[0] === 'pp') { pp.tab = p[1]; pp.doc = null; if ((p[1] === 'users' && !pUser().perm.users) || (p[1] === 'formalne' && !pUser().perm.form)) pp.u = 'ewa'; return go('portal'); }
+    if (p[0] === 'pd') { pd.tab = p[1]; pd.sel = null; return go('plan'); }
+    if (p[0] === 'mg') { mg.tab = p[1]; return go('magazyn'); }
+    if (p[0] === 'st') { st.tab = p[1]; return go('ustawienia'); }
+    if (p[0] === 'pvt') { pv.sel = null; pv.tab = p[1]; return go('projekty'); }
+    if (p[0] === 'agent') { st.tab = 'agenci'; st.agent = p[1]; return go('ustawienia'); }
+    if (p[0] === 'ag') return agRun(p[1]);
+    if (p[0] === 'bot') { go('pulpit'); return openPanel(); }
+    return botGo(t);
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]'); if (!el) return; var a = el.dataset.act;
+    if (a === 'zalog') { e.stopImmediatePropagation(); zalBack(false); openSheet(zalSheet()); }
+    else if (a === 'zalback') { e.stopImmediatePropagation(); zalBack(false); go('pulpit'); openSheet(zalSheet()); }
+    else if (a === 'zggo') { e.stopImmediatePropagation(); zgGo(el.dataset.t); }
+  }, true);
+
+  /* ================= Raport z montażu dla klienta + udostępnianie linkiem ================= */
+  (function () { var s = document.createElement('style'); s.textContent = 'body.pubview nav.nav,body.pubview #botFab,body.pubview #bellBtn,body.pubview #zalBack{display:none!important}body.pubview main{padding-bottom:24px!important}@media print{header.top,nav.nav,#botFab,.noprint{display:none!important}body{background:#fff!important;color:#111!important}.card{border-color:#ddd!important;background:#fff!important}}'; document.head.appendChild(s); })();
+  var RPSIG = store.get('rpsig', '');
+  document.addEventListener('click', function (e) { var el = e.target.closest('[data-act="sendprot"]'); if (el) { try { var c = $('#sig'); if (c) { RPSIG = c.toDataURL('image/png'); store.set('rpsig', RPSIG); } } catch (x) {} } }, true);
+  function rpEv(k) { var x = (MTT.ev || []).filter(function (y) { return y[0] === k; }); return x.length ? hm(x[x.length - 1][1]) : ''; }
+  function repData() {
+    var c = mttCalc(), st = rpEv('start'), sp = rpEv('stop'), q = QCREC.filter(function (x) { return x.nr === '2155' && x.k === 'MON'; })[0], it = KOMPL0['2155'] || [], dl = it.filter(function (_, i) { return ((SHIP['2155'] || {})[i] || {}).dost; }).length, got = dl || it.length;
+    return { n: '2155', d: today(), a: rpEv('przyjazd') || '07:48', s: st || '08:05', e: sp || '14:50', w: sp ? Math.round(c.work / 60000) : 405, c: mttCrew().filter(function (x) { return MTT.crew[x] !== false; }), m: q ? q.m : ['0,2', '350'], p: closed && closed.photos ? closed.photos.length || 6 : 6, sg: 'Piotr S.', sgt: closed ? closed.at : '15:38', nt: closed ? closed.note || 'Bez uwag' : 'Bez uwag', k: got + '/' + it.length, id: 'RM/2155/' + today().split('.').reverse().join('') };
+  }
+  function rpEnc(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function rpDec(s) { try { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return JSON.parse(decodeURIComponent(escape(atob(s)))); } catch (e) { return null; } }
+  function rpUrl(o) { return location.href.split('#')[0] + '#raport=' + rpEnc(o || repData()); }
+  var RP = { d: null, pub: false };
+  function rpHtml(R) {
+    var site = sitesAll().filter(function (s) { return s.nr === R.n; })[0], pjx = pj(R.n), gw = new Date(TODAY.getFullYear() + 2, TODAY.getMonth(), TODAY.getDate()), ph = closed && closed.photos && closed.photos.length && !RP.pub ? closed.photos : null;
+    var row = function (l, v) { return '<div class="row"><span class="t-muted">' + l + '</span><b style="font-weight:500;text-align:right">' + v + '</b></div>'; };
+    var d4 = PDEC.filter(function (x) { return x.id === 'd4'; })[0], ok = store.get('rpok', '') || (d4 && d4.ans ? d4.who + ', ' + d4.at : '');
+    return (RP.pub ? '' : '<div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="rpback">‹ Wróć</button><button class="btn" data-act="share">🔗 Udostępnij klientowi</button></div>') +
+      '<section class="card grid" style="gap:10px;border-color:rgba(136,255,88,.45)"><div style="display:flex;gap:12px;align-items:center"><span style="width:46px;height:46px;flex:none;background:#0E0D0C;border-radius:12px;padding:6px;display:block">' + LOGO + '</span><div style="min-width:0"><span class="eyebrow">Raport z montażu · ' + esc(R.id) + '</span><h1 style="font-size:24px;line-height:1.15">' + esc(pjx ? pjx.name : 'Pylon cenowy 6 m') + '</h1></div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip c-green">✓ Montaż zakończony</span><span class="chip c-green">✓ Odbiór bez uwag</span><span class="chip">' + esc(R.d) + '</span></div></section>' +
+      '<section class="card"><h2 style="font-size:17px;margin-bottom:6px">Obiekt</h2><div class="list">' + row('Klient', esc(fname(1818))) + row('Lokalizacja', 'Stacja paliw Łódź · ul. Włókniarzy 69') + row('Zakres', 'Montaż i uruchomienie pylonu cenowego 6 m z linią cenową LPG') + row('Zlecenie', esc(R.n)) + '</div></section>' +
+      '<section class="card"><h2 style="font-size:17px;margin-bottom:6px">Przebieg prac</h2><div class="kpis" style="margin:0 0 8px"><div class="kpi" style="padding:10px"><small>Przyjazd</small><b style="font-size:20px">' + R.a + '</b></div><div class="kpi" style="padding:10px"><small>Montaż</small><b style="font-size:20px">' + R.s + '–' + R.e + '</b></div><div class="kpi" style="padding:10px"><small>Czas pracy</small><b style="font-size:20px">' + Math.floor(R.w / 60) + ' h ' + pad(R.w % 60) + ' min</b></div></div><div class="list">' + row('Ekipa Graffico', esc(R.c.join(', '))) + row('Potwierdzenie obecności', 'GPS w aplikacji montażysty (do 300 m od adresu)') + row('Elementy dostarczone', esc(R.k) + ' kolli – zeskanowane kodem QR') + '</div></section>' +
+      '<section class="card"><h2 style="font-size:17px;margin-bottom:8px">Wykonane prace – krok po kroku</h2><div class="grid" style="gap:10px">' + STEPS.map(function (s, i) { return '<div style="display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:start"><div style="aspect-ratio:4/3;border-radius:10px;background:#333 url(' + (ph && ph[i] ? ph[i] : dph(i)) + ') center/cover"></div><div><b style="font-weight:500">' + (i + 1) + '. ' + esc(s[0]) + ' <span class="t-green">✓</span></b><br><small class="t-dim">' + s[1].map(esc).join(' · ') + '</small></div></div>'; }).join('') + '</div><small class="t-dim" style="display:block;margin-top:8px">' + R.p + ' zdjęć z datą, godziną i lokalizacją GPS – wykonane w aplikacji montażysty.</small></section>' +
+      '<section class="card"><h2 style="font-size:17px;margin-bottom:6px">Pomiary i testy</h2><div class="list">' + [['Pion konstrukcji', R.m[0] + '°', 'norma ≤ 0,5°'], ['Moment dokręcenia kotew M24', R.m[1] + ' Nm', 'wymagane 350 Nm'], ['Zasilanie 230 V i zabezpieczenia', 'OK', 'pomiary elektryczne'], ['Wyświetlacze cen – komunikacja z kasą', 'OK', 'PB95, ON, LPG'], ['Podświetlenie LED', 'OK', 'wszystkie moduły świecą']].map(function (r) { return '<div class="row"><span>' + r[0] + '<br><small class="t-dim">' + r[2] + '</small></span><b class="t-green" style="flex:none">✓ ' + r[1] + '</b></div>'; }).join('') + '</div></section>' +
+      '<section class="card grid" style="gap:8px"><h2 style="font-size:17px">Odbiór</h2><div class="list">' + row('Protokół odbioru', 'podpisany na miejscu') + row('Podpis klienta', esc(R.sg) + ' · ' + esc(R.d.slice(0, 5)) + ' ' + esc(R.sgt)) + row('Uwagi klienta', esc(R.nt)) + '</div>' + (RPSIG && !RP.pub ? '<div style="background:#fff;border-radius:10px;padding:6px;max-width:260px"><img src="' + RPSIG + '" alt="Podpis klienta" style="width:100%;display:block"></div>' : '') + '</section>' +
+      '<section class="card grid" style="gap:8px"><h2 style="font-size:17px">Gwarancja i serwis</h2><div class="list">' + row('Gwarancja', '24 miesiące – do ' + plDt(gw)) + row('Przegląd gwarancyjny', 'za 12 miesięcy – przypomnimy w portalu') + row('Serwis', '+48 695 095 630 · biuro@graffico.pl') + '</div><div style="display:flex;gap:12px;align-items:center"><div style="width:96px;height:96px;background:#fff;border-radius:10px;padding:5px;flex:none">' + qrTag('GOS:PRD:' + R.n, 2) + '</div><small class="t-dim">Paszport produktu: ten sam kod jest na tabliczce pylonu. Serwis widzi po zeskanowaniu pełną historię wykonania.</small></div></section>' +
+      '<section class="card grid noprint" style="gap:8px">' + (ok ? '<div class="alert a-green"><span class="chip">POTWIERDZONO</span><span>Raport potwierdzony: ' + esc(ok) + '. Dziękujemy!</span></div>' : '<b>Czy wszystko się zgadza?</b><div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><button class="btn p" data-act="rpok">✓ Potwierdzam</button><button class="btn" data-act="rpnote">Zgłoś uwagę</button></div>') + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="rpprint">🖨 Pobierz PDF</button><button class="btn" data-act="rpportal">Portal klienta →</button></div><small class="t-dim">Raport zawiera wyłącznie informacje o wykonaniu – bez cen i kosztów. Pełna dokumentacja powykonawcza i historia są w portalu klienta.</small></section>';
+  }
+  VIEWS.raport = {
+    title: 'Raport z montażu', sub: 'GRAFFICO · ZLECENIE 2155',
+    html: function () { return rpHtml(RP.d || repData()); },
+    on: function (act, el) {
+      if (act === 'rpback') { RP.d = null; return go(RP.from || 'zlecenie'); }
+      if (act === 'rpprint') { try { window.print(); } catch (e) { toast('Użyj „Drukuj” w przeglądarce'); } return; }
+      if (act === 'rpok') { var w = 'Klient (link z raportu), ' + today() + ' ' + nowTxt(); store.set('rpok', w); var d4 = PDEC.filter(function (x) { return x.id === 'd4'; })[0]; if (d4 && !d4.ans) { d4.ans = 'Akceptuję'; d4.who = 'Klient (link z raportu)'; d4.at = today() + ' ' + nowTxt(); savePdec(); (PDOC['2155'] || []).forEach(function (x) { if (x.id === 'pow') { var v = x.vs[x.vs.length - 1]; v.st = 'zaakceptowana'; v.dec = ['Klient (link z raportu)', d4.at, 'Akceptuję', '']; } }); savePdoc(); } logEvent('ok', 'Klient → raport z montażu', 'Klient potwierdził raport z montażu 2155 (link). Dokumentacja powykonawcza zaakceptowana.'); render(); return toast('Dziękujemy – potwierdzenie trafiło do Graffico'); }
+      if (act === 'rpnote') return openSheet('<div class="grab"></div><h2>Uwaga do montażu</h2><form data-form="rpnote" class="grid"><textarea id="rpN" class="in" rows="3" required placeholder="np. Proszę poprawić ustawienie ceny LPG"></textarea><button class="btn p full">Wyślij do Graffico</button><button type="button" class="btn full" data-act="close">Anuluj</button></form>');
+      if (act === 'rpportal') { document.body.classList.remove('pubview'); RP.pub = false; pp.u = 'jan'; pp.z = '2155'; pp.tab = 'odbior'; return go('portal'); }
+    },
+    submit: function (f) { if (f.dataset.form !== 'rpnote') return; var t = $('#rpN').value.trim(); if (!t) return; var nr = 'REK/2026/10/0' + (10 + REK.length); REK.unshift({ nr: nr, z: '2155', firm: 1818, src: 'Raport z montażu (link)', d: today(), t: t, st: 'nowa – do kwalifikacji', own: 'Robert Ś. (PM)', due: '', dec: '', cost: 0, react: '—', diag: '' }); saveRek(); closeSheet(); toast('Uwaga ' + nr + ' przekazana – PM odpowie do 24 h'); }
+  };
+  function shareSheet() {
+    var R = repData(), url = rpUrl(R), txt = 'Dzień dobry, w załączeniu raport z montażu pylonu cenowego – stacja Łódź (zlecenie 2155), ' + R.d + ': ' + url;
+    return '<div class="grab"></div><small class="t-dim">Zlecenie 2155 · AMIC Polska</small><h2>Udostępnij klientowi</h2>' +
+      '<div class="card" style="background:var(--surface2);display:grid;gap:6px;padding:12px"><b>Raport z montażu ' + esc(R.id) + '</b><small class="t-muted">' + R.s + '–' + R.e + ' · ekipa: ' + esc(R.c.join(', ')) + ' · ' + R.p + ' zdjęć · pion ' + R.m[0] + '° · kotwy ' + R.m[1] + ' Nm · kolli ' + R.k + ' · podpis: ' + esc(R.sg) + ' (' + esc(R.nt) + ')</small><button class="btn p" data-act="rpopen">👁 Podgląd raportu</button></div>' +
+      '<div style="display:flex;gap:12px;align-items:center"><div style="width:120px;height:120px;background:#fff;border-radius:10px;padding:6px;flex:none">' + qrTag(url, 2) + '</div><small class="t-dim">Klient skanuje kod telefonem i od razu widzi raport – bez logowania. Na prezentacji: zeskanuj swoim telefonem.</small></div>' +
+      '<label class="t-muted" style="font-size:13px">Link do raportu<input id="rpUrl" class="in" readonly value="' + esc(url) + '" style="margin-top:4px;font-size:12px"></label>' +
+      '<div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="rpcopy">📋 Kopiuj link</button><button class="btn" data-act="rpnew">↗ Otwórz w przeglądarce</button><a class="btn" style="text-decoration:none;justify-content:center" href="mailto:?subject=' + encodeURIComponent('Raport z montażu – zlecenie 2155, Łódź') + '&body=' + encodeURIComponent(txt) + '">✉ E-mail</a><a class="btn" style="text-decoration:none;justify-content:center" href="sms:?&body=' + encodeURIComponent(txt) + '">💬 SMS</a></div>' + (navigator.share ? '<button class="btn full" data-act="rpnative">Udostępnij… (WhatsApp, Teams, inne)</button>' : '') +
+      '<div class="alert a-green" style="font-size:13px"><span class="chip">PORTAL</span><span>Raport jest też w portalu klienta (Jan K. – administrator, Piotr S. – kierownik stacji) w zakładce „Odbiór i gwarancja”. Wysłano powiadomienie.</span></div><small class="t-dim">Link zawiera tylko dane raportu (bez cen i kosztów). W wersji produkcyjnej: jednorazowy token ważny 30 dni i rejestr otwarć.</small><button class="btn full" data-act="close">Zamknij</button>';
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]'); if (!el) return; var a = el.dataset.act;
+    if (a === 'share' && (cur === 'zlecenie' || cur === 'raport' || cur === 'projekty')) { e.stopImmediatePropagation(); logEvent('doc', 'System → portal klienta AMIC', 'Raport z montażu 2155 udostępniony klientowi (portal + link).'); openSheet(shareSheet()); }
+    else if (a === 'rpopen') { e.stopImmediatePropagation(); RP.from = cur === 'raport' ? (RP.from || 'zlecenie') : cur; RP.d = null; RP.pub = false; go('raport'); }
+    else if (a === 'rpcopy') { e.stopImmediatePropagation(); var i = $('#rpUrl'), v = i ? i.value : ''; try { navigator.clipboard.writeText(v).then(function () { toast('Link skopiowany – wklej klientowi w e-mailu lub komunikatorze'); }, function () { i.select(); document.execCommand('copy'); toast('Link skopiowany'); }); } catch (x) { i.select(); try { document.execCommand('copy'); toast('Link skopiowany'); } catch (y) { toast('Zaznacz link i skopiuj ręcznie'); } } }
+    else if (a === 'rpnew') { e.stopImmediatePropagation(); var w = window.open($('#rpUrl').value, '_blank', 'noopener'); if (!w) toast('Przeglądarka zablokowała nowe okno – użyj „Kopiuj link”'); }
+    else if (a === 'rpnative') { e.stopImmediatePropagation(); try { navigator.share({ title: 'Raport z montażu 2155', url: $('#rpUrl').value }); } catch (x) {} }
+    else if (a === 'rprep') { e.stopImmediatePropagation(); RP.from = cur; RP.d = null; RP.pub = false; go('raport'); }
+  }, true);
+  var go12 = go; go = function (v) { if (v !== 'raport') { document.body.classList.remove('pubview'); RP.pub = false; } return go12(v); };
+  var pOdbior12 = pOdbior; pOdbior = function () { var u = pUser(); return (u.proj.indexOf('2155') > -1 ? '<section class="card" style="border-color:rgba(136,255,88,.45);display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:200px"><b>Raport z montażu – stacja Łódź (2155)</b><br><small class="t-dim">' + today() + ' · zdjęcia, pomiary, podpis, gwarancja</small></span><button class="btn p" data-act="rprep">📋 Otwórz raport</button></section>' : '') + pOdbior12(); };
+  function rpBoot() { var h = location.hash || '', m = h.match(/^#raport=(.+)$/); if (!m) return false; var d = rpDec(m[1]); if (!d) return false; RP.d = d; RP.pub = true; document.body.classList.add('pubview'); go12('raport'); return true; }
+
+  /* ================= QR: otwórz widok na tablecie / telefonie (prezentacja) ================= */
+  var QRV = { hala: ['Monitor na hali', 'Priorytety, komunikaty, ranking – na telewizorze lub tablecie przy hali'], monter: ['Aplikacja montażysty', 'Plan na mapie, montaż krok po kroku, zdjęcia, protokół – na telefonie ekipy'], stanowisko: ['Monitor gniazda (kiosk)', 'Tablet przy maszynie: zlecenie, rysunek, zmiany, zgłoszenia'] };
+  function qrvUrl(v) { return location.href.split('#')[0] + '#' + v; }
+  function qrvSheet(v) {
+    var u = qrvUrl(v), q = QRV[v];
+    return '<div class="grab"></div><small class="t-dim">Otwórz na drugim urządzeniu</small><h2>' + esc(q[0]) + '</h2><p class="t-muted" style="margin:0;font-size:14px">' + esc(q[1]) + '</p>' +
+      '<div style="background:#fff;border-radius:16px;padding:12px;width:min(280px,100%);aspect-ratio:1/1;margin:6px auto">' + qrTag(u, 4) + '</div>' +
+      '<p style="margin:0;text-align:center;font-size:14px">Zeskanuj aparatem tabletu lub telefonu – ' + esc(q[0].toLowerCase()) + ' otworzy się od razu.</p>' +
+      '<label class="t-muted" style="font-size:13px">Link<input id="qrvU" class="in" readonly value="' + esc(u) + '" style="margin-top:4px;font-size:12px"></label>' +
+      '<div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="qrvcopy">📋 Kopiuj link</button><button class="btn" data-act="qrvopen" data-v="' + v + '">↗ Otwórz tutaj</button></div>' +
+      (/github\.io|localhost|127\.0\.0\.1/.test(location.host) ? '' : '<div class="alert a-orange" style="font-size:13px"><span class="chip">UWAGA</span><span>To jest podgląd. Na prezentacji otwórz system z adresu GitHub (marcinvbc.github.io/graffico-os) – wtedy kod QR prowadzi pod właściwy adres.</span></div>') +
+      '<small class="t-dim">Dane demo są w każdym urządzeniu osobno (bez serwera) – tablet startuje od stanu po „Resetuj demo”.</small><button class="btn full" data-act="close">Zamknij</button>';
+  }
+  function qrvBtn(v) { return '<button class="btn" data-act="qrv" data-v="' + v + '" style="min-height:38px;font-size:13px">📱 QR – otwórz na tablecie</button>'; }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]'); if (!el) return; var a = el.dataset.act;
+    if (a === 'qrv') { e.stopImmediatePropagation(); openSheet(qrvSheet(el.dataset.v)); }
+    else if (a === 'qrvcopy') { e.stopImmediatePropagation(); var i = $('#qrvU'); try { navigator.clipboard.writeText(i.value).then(function () { toast('Link skopiowany'); }, function () { i.select(); document.execCommand('copy'); toast('Link skopiowany'); }); } catch (x) { i.select(); try { document.execCommand('copy'); toast('Link skopiowany'); } catch (y) {} } }
+    else if (a === 'qrvopen') { e.stopImmediatePropagation(); closeSheet(); go(el.dataset.v); }
+  }, true);
+  var halaHtml0 = VIEWS.hala.html; VIEWS.hala.html = function () { return '<div style="display:flex;justify-content:flex-end">' + qrvBtn('hala') + '</div>' + halaHtml0.apply(this, arguments); };
+  var monHtml0 = VIEWS.monter.html; VIEWS.monter.html = function () { var h = monHtml0.apply(this, arguments); return mt.screen === 'plan' ? '<div style="display:flex;justify-content:flex-end">' + qrvBtn('monter') + '</div>' + h : h; };
+  var stanHtml0 = VIEWS.stanowisko.html; VIEWS.stanowisko.html = function () { return (sn && sn.kiosk ? '' : '<div style="display:flex;justify-content:flex-end">' + qrvBtn('stanowisko') + '</div>') + stanHtml0.apply(this, arguments); };
+
   var CAL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
   function dateField(attrs, val, label) {
     return '<span class="datef"><input type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="dd.mm.rrrr" class="in dtxt" value="' + plDate(val) + '" ' + attrs + ' aria-label="' + label + ' (dd.mm.rrrr)"><button type="button" class="calbtn" data-act="cal" aria-label="Wybierz datę z kalendarza">' + CAL + '</button><input type="date" class="dpick" tabindex="-1" aria-hidden="true" value="' + (val || '') + '"></span>';
@@ -6668,5 +6821,6 @@ return qrcode;
   function bell() { var b = $('#bellBtn .badge'); if (b) b.textContent = allAlerts().length; }
   setInterval(function () { var V = VIEWS[cur]; if (V.tick) V.tick(); }, 500);
   var h = (location.hash || '').replace('#', '');
-  go(VIEWS[h] ? h : 'start');
+  if (!rpBoot()) go(VIEWS[h] ? h : 'start');
+  window.addEventListener('hashchange', function () { rpBoot(); });
 })();
