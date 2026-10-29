@@ -130,12 +130,12 @@
         '<button class="btn" data-act="reset" style="align-self:flex-start">Resetuj demo (przed kolejną prezentacją)</button>';
     },
     on: function (act) {
-      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms', 'models', 'agents', 'push', 'pts', 'chat', 'rules', 'sitesAdd', 'proj', 'portal', 'carcfg', 'nd', 'role', 'toklim', 'usage', 'pmp', 'derr', 'drules', 'dpts', 'prd', 'dt', 'rcplog', 'rcpcfg', 'mtt', 'snwc', 'snseen', 'mat', 'mdoc', 'pos', 'kompl', 'ship', 'qcrec', 'ncr', 'rek', 'leave', 'bhpi', 'trainp', 'gclog', 'ratek', 'fs', 'fsp', 'fz', 'fincfg', 'fnclosed', 'bistate', 'alr', 'pusers', 'pdoc', 'pdec', 'pmsg', 'pnot', 'rpok', 'rpsig'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
+      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms', 'models', 'agents', 'push', 'pts', 'chat', 'rules', 'sitesAdd', 'proj', 'portal', 'carcfg', 'nd', 'role', 'toklim', 'usage', 'pmp', 'derr', 'drules', 'dpts', 'prd', 'dt', 'rcplog', 'rcpcfg', 'mtt', 'snwc', 'snseen', 'mat', 'mdoc', 'pos', 'kompl', 'ship', 'qcrec', 'ncr', 'rek', 'leave', 'bhpi', 'trainp', 'gclog', 'ratek', 'fs', 'fsp', 'fz', 'fincfg', 'fnclosed', 'bistate', 'alr', 'pusers', 'pdoc', 'pdec', 'pmsg', 'pnot', 'rpok', 'rpsig', 'pseudo', 'pslog'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
     }
   };
 
   VIEWS.pulpit = {
-    title: 'Pulpit', sub: 'PIĄTEK 23.10 · ZARZĄD',
+    title: 'Pulpit', sub: 'ZARZĄD',
     html: function () {
       var done = ui.done, cnt = Object.keys(done).filter(function (k) { return done[k]; }).length;
       var rows = ORDERS.filter(function (o) { return ui.filter === 'all' || (ui.filter === 'late' ? (o.late || o.ok < 0) : o.g === ui.filter); });
@@ -2350,7 +2350,7 @@
   VIEWS.ustawienia = {
     title: 'Ustawienia', sub: 'ADMINISTRATOR · SYSTEM',
     html: function () {
-      var tabs = '<div class="seg">' + [['agenci', 'Agenci AI (' + AGENTS.length + ')'], ['modele', 'Modele LLM (' + MODELS.length + ')'], ['integracje', 'Integracje'], ['karuzela', 'Komunikaty w czacie (' + CARCFG.msgs.length + ')'], ['rcp', 'RCP – czas pracy']].map(function (t) { return '<button data-act="sttab" data-t="' + t[0] + '" aria-pressed="' + (st.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+      var tabs = '<div class="seg">' + [['agenci', 'Agenci AI (' + AGENTS.length + ')'], ['modele', 'Modele LLM (' + MODELS.length + ')'], ['integracje', 'Integracje'], ['karuzela', 'Komunikaty w czacie (' + CARCFG.msgs.length + ')'], ['rcp', 'RCP – czas pracy'], ['rodo', '🛡 Ochrona danych (RODO)']].map(function (t) { return '<button data-act="sttab" data-t="' + t[0] + '" aria-pressed="' + (st.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
       if (st.tab === 'modele') return tabs + tokensHtml() + '<div style="height:4px"></div>' + modelsHtml();
       if (st.tab === 'integracje') return tabs + integrHtml();
       if (st.tab === 'karuzela') return tabs + carSettingsHtml();
@@ -6530,6 +6530,160 @@ return qrcode;
   var halaHtml0 = VIEWS.hala.html; VIEWS.hala.html = function () { return '<div style="display:flex;justify-content:flex-end">' + qrvBtn('hala') + '</div>' + halaHtml0.apply(this, arguments); };
   var monHtml0 = VIEWS.monter.html; VIEWS.monter.html = function () { var h = monHtml0.apply(this, arguments); return mt.screen === 'plan' ? '<div style="display:flex;justify-content:flex-end">' + qrvBtn('monter') + '</div>' + h : h; };
   var stanHtml0 = VIEWS.stanowisko.html; VIEWS.stanowisko.html = function () { return (sn && sn.kiosk ? '' : '<div style="display:flex;justify-content:flex-end">' + qrvBtn('stanowisko') + '</div>') + stanHtml0.apply(this, arguments); };
+
+  /* ================= OCHRONA DANYCH: anonimizacja i pseudonimizacja przed modelami LLM ================= */
+  var PSCAT = [['firmy', 'Nazwy klientów i dostawców'], ['osoby', 'Imiona i nazwiska'], ['ids', 'NIP, REGON, KRS, PESEL'], ['kontakt', 'E-mail i telefon'], ['adresy', 'Adresy'], ['konta', 'Numery rachunków'], ['umowy', 'Numery umów, ofert, faktur'], ['kwoty', 'Kwoty (wyłącz, gdy model ma liczyć)']];
+  var PSCFG = store.get('pseudo', null) || { on: true, mode: 'pseudo', ext: true, skipWeb: true, cats: { firmy: true, osoby: true, ids: true, kontakt: true, adresy: true, konta: true, umowy: true, kwoty: false } };
+  function savePs() { store.set('pseudo', PSCFG); }
+  var PSLOG = store.get('pslog', []);
+  var PSNOTE = '\n\nOCHRONA DANYCH: dane wrażliwe w treści zastąpiono znacznikami w nawiasach kwadratowych, np. [FIRMA_1], [OSOBA_2], [NIP_1]. Używaj tych znaczników dokładnie w tej postaci, nie zgaduj ich treści i nie twórz nowych. Organizacja odkoduje je po swojej stronie.';
+  var PSLAB = { firmy: 'FIRMA', osoby: 'OSOBA', ids: 'ID', kontakt: 'KONTAKT', adresy: 'ADRES', konta: 'KONTO', umowy: 'DOKUMENT', kwoty: 'KWOTA' };
+  function psDict() {
+    var F = [], O = [], add = function (arr, v) { v = String(v || '').trim(); if (v.length >= 4 && arr.indexOf(v) < 0) arr.push(v); };
+    (typeof FIRMS !== 'undefined' ? FIRMS : []).forEach(function (f) { add(F, f.full); add(F, f.name); (f.contacts || []).forEach(function (c) { add(O, c.name); }); });
+    EMPX.forEach(function (x) { add(O, x.name); }); PU.forEach(function (u) { add(O, u.name); }); Object.keys(CREW).forEach(function (k) { CREW[k].forEach(function (n) { add(O, n.replace(/ \(.*\)/, '')); }); });
+    Object.keys(ROLES).forEach(function (k) { if (/^[A-ZŁŚŻ][a-ząćęłńóśźż]+ [A-ZŁŚŻ]/.test(ROLES[k][0])) add(O, ROLES[k][0]); });
+    ['Marcin', 'Agnieszka W.', 'Robert Ś.', 'Michał W.', 'Anna D.', 'Łukasz B.', 'Karol P.', 'Monika R.', 'Tomasz J.', 'Zbigniew T.', 'Ewa N.', 'Jan K.', 'Piotr S.', 'Katarzyna M.'].forEach(function (n) { add(O, n); });
+    F.sort(function (a, b) { return b.length - a.length; }); O.sort(function (a, b) { return b.length - a.length; });
+    return { F: F, O: O };
+  }
+  function reEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function psMake(text, opt) {
+    opt = opt || {}; var anon = opt.anon || PSCFG.mode === 'anon', C = PSCFG.cats, map = {}, rev = {}, cnt = {}, t = String(text || ''), D = psDict();
+    var tok = function (cat, v) { var key = cat + '|' + v.toLowerCase(); if (rev[key]) return rev[key]; cnt[cat] = (cnt[cat] || 0) + 1; var tk = anon ? '[' + PSLAB[cat] + ']' : '[' + PSLAB[cat] + '_' + cnt[cat] + ']'; rev[key] = tk; if (!anon) map[tk] = v; return tk; };
+    var rep = function (cat, re, grp) { if (!C[cat]) return; t = t.replace(re, function (m) { var a = arguments, v = grp ? a[grp] : m; if (/^\[[A-Z]+(_\d+)?\]$/.test(v)) return m; return grp ? m.replace(v, tok(cat, v)) : tok(cat, v); }); };
+    rep('kontakt', /[\w.+-]+@[\w-]+\.[\w.-]+/g);
+    rep('konta', /\b(?:PL ?)?\d{2}(?: ?\d{4}){6}\b/g);
+    rep('ids', /\b(?:NIP|REGON|KRS|PESEL)[:\s]*([\d\- ]{9,17}\d)/gi, 1);
+    rep('ids', /\b\d{3}-\d{3}-\d{2}-\d{2}\b|\b\d{3}-\d{2}-\d{2}-\d{3}\b|\b\d{11}\b/g);
+    rep('umowy', /\b(?:UM|NDA|FV|ZAM|OF|OFR|AN|REK|NCR|RM)\/[\w\/.-]*\d[\w\/.-]*/g);
+    rep('kontakt', /(?:\+48[\s-]?)?\b\d{3}[\s-]\d{3}[\s-]\d{3}\b/g);
+    rep('adresy', /\b(?:ul\.|al\.|os\.|pl\.)\s?[A-ZŁŚŻŹĆŃÓ0-9][^,\n<]{1,40}?\s\d+[a-zA-Z]?(?:\/\d+)?/g);
+    rep('adresy', /\b\d{2}-\d{3}\s+[A-ZŁŚŻŹĆŃÓ][a-ząćęłńóśźż\-]+(?:\s[A-ZŁŚŻŹĆŃÓ][a-ząćęłńóśźż]+)?/g);
+    if (C.firmy) D.F.forEach(function (f) { t = t.replace(new RegExp('(^|[^\\wąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(' + reEsc(f) + ')(?![\\wąćęłńóśźż])', 'g'), function (m, p1, v) { return p1 + tok('firmy', f); }); });
+    if (C.osoby) { D.O.forEach(function (o) { t = t.replace(new RegExp('(^|[^\\wąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(' + reEsc(o) + ')(?![\\wąćęłńóśźż])', 'g'), function (m, p1) { return p1 + tok('osoby', o); }); }); rep('osoby', /(?:Pan[i]?|reprezentowan\w*\s+przez|osoba kontaktowa:?|podpisał[a]?:?)\s+([A-ZŁŚŻŹĆŃÓ][a-ząćęłńóśźż]+\s+[A-ZŁŚŻŹĆŃÓ][a-ząćęłńóśźż\-]+)/g, 1); }
+    rep('kwoty', /\b\d{1,3}(?:[  ]\d{3})*(?:,\d{1,2})?\s?(?:zł|PLN)/g);
+    var n = Object.keys(cnt).reduce(function (s, k) { return s + cnt[k]; }, 0);
+    return { text: t, map: map, cnt: cnt, n: n, anon: anon, restore: function (s) { return String(s || '').replace(/\[[A-Z]+_\d+\]/g, function (k) { return map[k] !== undefined ? map[k] : k; }); } };
+  }
+  /* sejf mapy znaczników: AES-256-GCM w przeglądarce (klucz nieeksportowalny) */
+  var PSKEY = null;
+  function psSeal(map) { try { if (!window.crypto || !crypto.subtle) return Promise.resolve(null); var iv = crypto.getRandomValues(new Uint8Array(12)); return (PSKEY ? Promise.resolve(PSKEY) : crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']).then(function (k) { PSKEY = k; return k; })).then(function (k) { return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, k, new TextEncoder().encode(JSON.stringify(map))); }).then(function (ct) { return { iv: iv, ct: ct, bytes: ct.byteLength }; }, function () { return null; }); } catch (e) { return Promise.resolve(null); } }
+  function psOpen(sealed) { if (!sealed || !PSKEY) return Promise.resolve(null); return crypto.subtle.decrypt({ name: 'AES-GCM', iv: sealed.iv }, PSKEY, sealed.ct).then(function (b) { return JSON.parse(new TextDecoder().decode(b)); }, function () { return null; }); }
+  function psLog(src, model, ps, chars) { PSLOG.unshift([today().slice(0, 5) + ' ' + nowTxt(), src, model, ps.n, Object.keys(ps.cnt).map(function (k) { return PSLAB[k] + ' ' + ps.cnt[k]; }).join(', '), chars]); PSLOG = PSLOG.slice(0, 30); store.set('pslog', PSLOG); }
+  function psHi(s) { return esc(s).replace(/\[([A-Z]+)(_\d+)?\]/g, '<b style="color:var(--pink);background:rgba(227,0,111,.14);border-radius:4px;padding:0 3px">[$1$2]</b>'); }
+  function psBox(ps, sentChars) { return '<details style="margin-top:8px;border:1px solid rgba(136,255,88,.35);border-radius:12px;padding:8px 10px;background:rgba(136,255,88,.06)"><summary style="cursor:pointer;font-size:13px"><b class="t-green">🛡 Ochrona danych:</b> ukryto ' + ps.n + ' informacji przed modelem</summary><div style="font-size:12px;margin-top:6px;display:grid;gap:6px"><span>' + (Object.keys(ps.cnt).map(function (k) { return PSLAB[k] + ': ' + ps.cnt[k]; }).join(' · ') || 'brak danych wrażliwych') + '</span><span class="t-dim">Do modelu trafiło ' + (sentChars || ps.text.length).toLocaleString('pl-PL') + ' znaków ze znacznikami zamiast danych. Mapa znaczników została w organizacji (zaszyfrowana AES-256-GCM), odpowiedź odkodowano lokalnie.</span><div style="max-height:150px;overflow:auto;background:var(--surface);border-radius:8px;padding:8px;line-height:1.5">' + psHi(ps.text.slice(0, 700)) + (ps.text.length > 700 ? '…' : '') + '</div></div></details>'; }
+  /* globalnie: każde wywołanie modelu zewnętrznego przechodzi przez pseudonimizację */
+  var callModelPs0 = callModel;
+  callModel = function (m, system, user, web, maxTok) {
+    var ag = agentOfPrompt(system); if (!PSCFG.on || (PSCFG.skipWeb && web) || (ag && agentById(ag) && agentById(ag).local)) return callModelPs0(m, system, user, web, maxTok);
+    var ps = psMake(user); psLog(ag || 'agent', m.name, ps, ps.text.length); psSeal(ps.map);
+    return callModelPs0(m, system + PSNOTE, ps.text, web, maxTok).then(function (j) { (j.content || []).forEach(function (c) { if (c.type === 'text') c.text = ps.restore(c.text); }); return j; });
+  };
+  /* ================= ZAŁĄCZNIKI W ASYSTENCIE GRAFFI ================= */
+  BOT.att = []; BOT.lastDoc = null;
+  function attInput() { var i = $('#botFile'); if (!i) { i = document.createElement('input'); i.type = 'file'; i.id = 'botFile'; i.multiple = true; i.accept = '.pdf,.docx,.txt,.md,.csv,.xlsx,.json,image/*'; i.style.display = 'none'; i.addEventListener('change', function () { attAdd(i.files); i.value = ''; }); document.body.appendChild(i); } return i; }
+  function attPick() { try { attInput().click(); return true; } catch (e) { return false; } }
+  function attChips(id) { return '<div id="' + id + '" style="display:flex;gap:6px;flex-wrap:wrap' + (BOT.att.length ? ';padding:8px 14px 0' : '') + '">' + BOT.att.map(function (a, i) { return '<span class="chip" style="border:1px solid var(--line2);gap:6px">📎 ' + esc(a.name) + ' <small class="t-dim">' + (a.st === 'czytam' ? 'czytam…' : a.err ? '⚠ ' + esc(a.err) : (a.text ? Math.round(a.text.length / 100) / 10 + ' tys. zn.' : esc(a.kind))) + '</small><button data-act="attdel" data-i="' + i + '" aria-label="Usuń" style="background:none;border:0;color:var(--muted);cursor:pointer;padding:0">✕</button></span>'; }).join('') + '</div>'; }
+  function attRender() { var a = $('#botAtt'); if (a) a.outerHTML = attChips('botAtt'); var b = $('#botAtt2'); if (b) b.outerHTML = attChips('botAtt2'); }
+  function zipText(file, path, re) { return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', 'JSZip').then(function (Z) { return file.arrayBuffer().then(function (b) { return Z.loadAsync(b); }); }).then(function (z) { var f = z.file(path); return f ? f.async('string') : ''; }).then(function (x) { return re(x); }); }
+  function attRead(a, f) {
+    var n = f.name.toLowerCase();
+    if (/^image\//.test(f.type)) { a.kind = 'obraz'; a.text = ''; a.note = 'Obraz – pseudonimizacja nie obejmuje treści obrazu, do modelu tylko po potwierdzeniu.'; return Promise.resolve(); }
+    if (/\.(txt|md|csv|json)$/.test(n) || /^text\//.test(f.type)) return f.text().then(function (t) { a.kind = 'tekst'; a.text = t; });
+    if (/\.pdf$/.test(n)) return loadPdfJs().then(function (lib) { return f.arrayBuffer().then(function (b) { return lib.getDocument({ data: b }).promise; }); }).then(function (pdf) { a.kind = 'PDF ' + pdf.numPages + ' str.'; var ch = Promise.resolve(''); for (var i = 1; i <= Math.min(pdf.numPages, 40); i++) (function (k) { ch = ch.then(function (acc) { return pdf.getPage(k).then(function (pg) { return pg.getTextContent(); }).then(function (tc) { return acc + tc.items.map(function (it) { return it.str; }).join(' ') + '\n'; }); }); })(i); return ch; }).then(function (t) { a.text = t; });
+    if (/\.docx$/.test(n)) return zipText(f, 'word/document.xml', function (x) { return x.replace(/<\/w:p>/g, '\n').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"'); }).then(function (t) { a.kind = 'Word'; a.text = t; });
+    if (/\.xlsx$/.test(n)) return zipText(f, 'xl/sharedStrings.xml', function (x) { return (x.match(/<t[^>]*>[^<]*<\/t>/g) || []).map(function (s) { return s.replace(/<[^>]+>/g, ''); }).join(' | '); }).then(function (t) { a.kind = 'Excel'; a.text = t; });
+    a.kind = 'plik'; a.text = ''; a.err = 'nieobsługiwany format'; return Promise.resolve();
+  }
+  function attAdd(files) {
+    files = Array.prototype.slice.call(files || []); if (!files.length) return;
+    files.forEach(function (f) { if (f.size > 25 * 1048576) return toast(f.name + ': plik ponad 25 MB – pomijam'); var a = { name: f.name, size: f.size, st: 'czytam', kind: '' }; BOT.att.push(a); attRender(); attRead(a, f).then(function () { a.st = 'ok'; a.text = (a.text || '').slice(0, 200000); }, function (e) { a.st = 'ok'; a.err = 'nie udało się odczytać' + (/pdf|zip/i.test(String(e && e.message)) ? ' (biblioteka offline)' : ''); }).then(function () { attRender(); if (BOT.att.indexOf(a) > -1) toast('Załącznik gotowy: ' + f.name + ' – zadaj pytanie albo wyślij'); }); });
+    toast(files.length === 1 ? 'Dodano: ' + files[0].name : 'Dodano ' + files.length + ' pliki');
+  }
+  function stripDoc(h) { return String(h).replace(/<(br|\/p|\/div|\/h\d|\/li|\/tr)[^>]*>/gi, '\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/[ \t]+/g, ' ').replace(/\n\s+/g, '\n').trim(); }
+  /* analiza demo na tekście ze znacznikami – liczby z tekstu, bez modelu */
+  function psDemo(t, q, names) {
+    var typ = /umow[ay] o zachowaniu poufności|NDA/i.test(t) ? 'umowa o zachowaniu poufności (NDA)' : /umow/i.test(t) ? 'umowa' : /ofert/i.test(t) ? 'oferta' : /protokół/i.test(t) ? 'protokół' : /faktur/i.test(t) ? 'faktura' : 'dokument';
+    var uniq = function (a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }); };
+    var firms = uniq(t.match(/\[FIRMA_\d+\]/g) || []), os = uniq(t.match(/\[OSOBA_\d+\]/g) || []), kw = uniq(t.match(/\[KWOTA_\d+\]|\b\d{1,3}(?:[  ]\d{3})+(?:,\d{2})?\s?zł/g) || []).slice(0, 5), dni = (t.match(/(\d+)\s*dni/) || [])[1], mies = (t.match(/(\d+)\s*(?:miesiąc\w*|miesięcy|mies\.)/) || [])[1], daty = uniq(t.match(/\b\d{2}\.\d{2}\.\d{4}\b/g) || []).slice(0, 4), kary = (t.match(/[^.\n]*kar[ay]? umown[^.\n]*\./i) || [])[0], odst = /odstąpi/i.test(t), sila = /siła wyższa|siły wyższej/i.test(t), pouf = /poufn/i.test(t);
+    var ryz = []; if (!kary) ryz.push('Brak zapisu o karach umownych – warto dodać limit kar (np. do 10% wartości).'); else if (!/maks|limit|nie więcej|łącznie/i.test(kary)) ryz.push('Kary umowne bez górnego limitu – rekomendacja: łączny limit kar.'); if (dni && +dni > 30) ryz.push('Termin płatności ' + dni + ' dni – dłuższy niż standard (14–30 dni), wpływa na cash flow.'); if (!mies && typ !== 'umowa o zachowaniu poufności (NDA)') ryz.push('Nie wskazano okresu gwarancji.'); if (!sila && typ === 'umowa') ryz.push('Brak klauzuli siły wyższej (ważne przy montażach i wietrze).'); if (!odst && typ === 'umowa') ryz.push('Brak warunków odstąpienia od umowy.');
+    return '<b>Analiza: ' + typ + '</b>' + (names ? ' <small class="t-dim">(' + esc(names) + ')</small>' : '') + ul([firms.length ? 'Strony / firmy: ' + firms.join(', ') : 'Strony: nie wykryto nazw firm', os.length ? 'Osoby: ' + os.join(', ') : '', kw.length ? 'Kwoty: ' + kw.join(', ') : '', dni ? 'Termin płatności: ' + dni + ' dni' : '', mies ? 'Gwarancja: ' + mies + ' mies.' : '', daty.length ? 'Daty: ' + daty.join(', ') : '', kary ? 'Kary umowne: „' + kary.trim().slice(0, 160) + '”' : '', pouf ? 'Zawiera zapisy o poufności' : ''].filter(Boolean)) + '<b>Do uwagi</b>' + ul(ryz.length ? ryz : ['Nie wykryto typowych braków – sprawdź zapisy szczegółowo.']) + (q ? '<small class="t-dim">Pytanie: „' + esc(q) + '” – w trybie demo analiza regułowa; z kluczem API odpowie model na tekście ze znacznikami.</small>' : '');
+  }
+  function botAnalyze(docs, q) {
+    var names = docs.map(function (d) { return d.name; }).join(', '), all = docs.map(function (d) { return '=== ' + d.name + ' ===\n' + (d.text || '[' + (d.kind || 'plik') + ' – brak tekstu]'); }).join('\n\n');
+    BOT.msgs.push({ me: true, h: esc(q || 'Przeanalizuj') + '<br><small style="opacity:.85">' + docs.map(function (d) { return '📎 ' + esc(d.name); }).join(' · ') + '</small>' }); BOT.busy = true; botRender();
+    var ps = psMake(all), ag = agentById('pliki'), m = ag ? modelById(ag.model) : MODELS[0];
+    psLog('pliki · ' + names.slice(0, 40), m.key ? m.name : 'demo', ps, ps.text.length); psSeal(ps.map);
+    BOT.lastDoc = { name: names, text: all };
+    var fin = function (h, live) { BOT.busy = false; BOT.msgs.push({ h: h + psBox(ps), live: live }); botRender(); };
+    var img = docs.filter(function (d) { return d.kind === 'obraz'; });
+    if (!m.key) return setTimeout(function () { fin(ps.restore(psDemo(ps.text, q, names)) + (img.length ? '<p class="t-orange" style="margin:6px 0 0;font-size:13px">' + img.length + ' obraz(y) nie zostały wysłane – zawartość obrazu może zawierać dane osobowe.</p>' : ''), false); }, 900);
+    callModelPs0(m, ag.prompt + PSNOTE, 'Pytanie: ' + (q || 'Przeanalizuj dokument') + '\n\nDOKUMENTY (dane wrażliwe zastąpione znacznikami):\n' + ps.text.slice(0, 120000), false, 2000).then(function (j) { var t = (j.content || []).filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('\n'); fin(botFormat(ps.restore(t)), m.name); }).catch(function (e) { fin(ps.restore(psDemo(ps.text, q, names)) + '<small class="t-dim">Błąd API (' + esc(e.message) + ') – analiza regułowa.</small>', false); });
+  }
+  function sysDoc(n) {
+    if (/nda|poufno/.test(n)) return { name: 'NDA ' + DEAL_ID, text: stripDoc(ndaDoc()) };
+    if (/umow/.test(n) && deal.contractNr) return { name: 'Umowa ' + deal.contractNr, text: stripDoc(contractDoc()) };
+    if (/ofert|umow/.test(n) && deal.offerNr) return { name: 'Oferta ' + deal.offerNr, text: stripDoc(offerDoc()) };
+    if (/protok/.test(n)) return { name: 'Protokół odbioru 2155', text: stripDoc(protDoc('2155', sitesAll().filter(function (s) { return s.nr === '2155'; })[0])) };
+    if (/gwaranc/.test(n)) return { name: 'Warunki gwarancji 2155', text: stripDoc(gwDoc(pj('2155'), sitesAll().filter(function (s) { return s.nr === '2155'; })[0])) };
+    return { name: 'NDA ' + DEAL_ID, text: stripDoc(ndaDoc()) };
+  }
+  var botAskPs0 = botAsk;
+  botAsk = function (q) {
+    q = String(q || '').trim(); var n = ' ' + norm(q) + ' ';
+    if (/dodaj (plik|zalacznik|dokument)|zalacz (plik|dokument)|wgraj (plik|dokument)|dolacz plik|otworz pliki/.test(n)) { var ok = attPick(); BOT.msgs.push({ me: true, h: esc(q) }); BOT.msgs.push({ h: '<b>Dodaj plik</b><p style="margin:4px 0">Wybierz plik z dysku albo przeciągnij go do okna czatu. Obsługuję PDF, Word, Excel, tekst i zdjęcia. Dane wrażliwe ukryję przed modelem.</p><button class="btn p" data-act="botattach" style="min-height:40px">📎 Wybierz plik</button>' + (ok ? '' : '<small class="t-dim" style="display:block">Przeglądarka wymaga dotknięcia przycisku.</small>'), live: false }); return botRender(); }
+    if (BOT.att.length) { if (BOT.att.some(function (a) { return a.st === 'czytam'; })) return toast('Czekam na odczyt załącznika…'); var docs = BOT.att.slice(); BOT.att = []; attRender(); return botAnalyze(docs, q || 'Przeanalizuj załączone pliki: najważniejsze ustalenia, kwoty, terminy, ryzyka'); }
+    if (!q) return;
+    if (/przeanalizuj|analiz[auy]|sprawdz|ocen|streszcz|podsumuj/.test(n) && /umow|ofert|nda|poufno|dokument|protok|gwaranc|plik|zalacz/.test(n)) { if (BOT.lastDoc && /dokument|plik|zalacz|ten |tego /.test(n)) return botAnalyze([BOT.lastDoc], q); return botAnalyze([sysDoc(n)], q); }
+    return botAskPs0(q);
+  };
+  /* przycisk 📎 i strefa upuszczania – okno czatu i karta na Pulpicie zarządu */
+  var panelHtmlPs0 = panelHtml;
+  panelHtml = function () { var h = panelHtmlPs0(); return h.replace('<form data-form="botq"', attChips('botAtt') + '<form data-form="botq"').replace('<label for="botIn"', '<button type="button" data-act="botattach" aria-label="Dodaj plik" title="Dodaj plik (lub przeciągnij do okna)" style="width:44px;height:48px;flex:none;border-radius:14px;border:1px solid var(--line2);background:var(--surface);color:var(--fg);font-size:18px;cursor:pointer">📎</button><label for="botIn"').replace('placeholder="Zadaj pytanie…"', 'placeholder="Pytanie, „dodaj plik” albo przeciągnij dokument…"'); };
+  var botCardInnerPs0 = botCardInner;
+  botCardInner = function () { return botCardInnerPs0().replace('<button class="btn p">Zapytaj</button></form>', '<button type="button" class="btn" data-act="botattach" aria-label="Dodaj plik" title="Dodaj plik">📎</button><button class="btn p">Zapytaj</button></form>' + attChips('botAtt2') + '<small class="t-dim" style="margin-top:-4px">📎 Przeciągnij umowę lub ofertę na tę kartę albo napisz „dodaj plik” – dane klientów zostaną ukryte przed modelem AI.</small>'); };
+  document.addEventListener('click', function (e) { var el = e.target.closest('[data-act]'); if (!el) return; var a = el.dataset.act; if (a === 'botattach') { e.stopImmediatePropagation(); e.preventDefault(); attPick(); } else if (a === 'attdel') { e.stopImmediatePropagation(); e.preventDefault(); BOT.att.splice(+el.dataset.i, 1); attRender(); } else if (a === 'docai') { e.stopImmediatePropagation(); var d = PSDOC; $('#overlay').innerHTML = ''; openPanel(); if (d) botAnalyze([{ name: d.t, text: stripDoc(d.h) }], 'Przeanalizuj dokument: strony, kwoty, terminy, obowiązki i ryzyka'); } }, true);
+  var dragN = 0;
+  function dropZone(e) { return e.target && e.target.closest && e.target.closest('#botPanel, #botCard'); }
+  document.addEventListener('dragenter', function (e) { var z = dropZone(e); if (!z || !e.dataTransfer || [].indexOf.call(e.dataTransfer.types || [], 'Files') < 0) return; e.preventDefault(); dragN++; z.style.outline = '3px dashed var(--pink)'; z.style.outlineOffset = '-6px'; });
+  document.addEventListener('dragover', function (e) { if (dropZone(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+  document.addEventListener('dragleave', function (e) { var z = dropZone(e); if (z && --dragN <= 0) { dragN = 0; z.style.outline = ''; } });
+  document.addEventListener('drop', function (e) { var z = dropZone(e); if (!z) return; e.preventDefault(); dragN = 0; z.style.outline = ''; if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) attAdd(e.dataTransfer.files); });
+  /* „Przeanalizuj z AI” w każdym podglądzie dokumentu (umowa, oferta, NDA, protokół, gwarancja) */
+  var PSDOC = null, openDocPs0 = openDoc;
+  openDoc = function (title, html) { openDocPs0(title, html); PSDOC = { t: title, h: html }; var bar = $('.docbar'); if (bar && !/^(Strona|Skan)/.test(title) && /<article|<p/.test(html)) { var b = document.createElement('button'); b.className = 'btn'; b.setAttribute('data-act', 'docai'); b.textContent = '🛡 Przeanalizuj z AI'; bar.insertBefore(b, bar.querySelector('[data-act="printdoc"]') || bar.lastChild); } };
+  /* ustawienia: zakładka Ochrona danych (RODO) */
+  function rodoHtml() {
+    var c = PSCFG, tg = function (k, l, on) { return '<button class="check' + (on ? ' on' : '') + '" data-act="pstg" data-k="' + k + '"><span class="box">' + (on ? '✓' : '') + '</span><span>' + l + '</span></button>'; };
+    var t = PSDEMO, ps = psMake(t);
+    return '<section class="card grid" style="gap:10px"><div class="h-row" style="margin:0"><h2>Ochrona danych przed modelami AI</h2><span class="chip ' + (c.on ? 'c-green' : 'c-red') + '">' + (c.on ? 'włączona' : 'wyłączona') + '</span></div><p class="t-muted" style="margin:0;font-size:14px">Zanim tekst trafi do modelu zewnętrznego, system zastępuje dane wrażliwe znacznikami ([FIRMA_1], [OSOBA_2], [NIP_1]…). Mapa znaczników zostaje w organizacji, zaszyfrowana AES-256-GCM. Po analizie odpowiedź jest odkodowywana – użytkownik widzi prawdziwe nazwy, model nigdy ich nie widział.</p>' +
+      tg('on', 'Pseudonimizacja włączona dla wszystkich agentów i Asystenta', c.on) + tg('skipWeb', 'Pomijaj agentów z wyszukiwaniem w sieci (dane publiczne: leady, weryfikacja kontaktów)', c.skipWeb) +
+      '<div><small class="t-muted">Tryb</small><div class="seg" style="margin-top:4px"><button data-act="psmode" data-v="pseudo" aria-pressed="' + (c.mode === 'pseudo') + '">Pseudonimizacja (odwracalna) – analizy dokumentów</button><button data-act="psmode" data-v="anon" aria-pressed="' + (c.mode === 'anon') + '">Anonimizacja (nieodwracalna) – statystyki, eksporty</button></div></div>' +
+      '<div><small class="t-muted">Co ukrywać</small><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px;margin-top:4px">' + PSCAT.map(function (k) { return tg('cat:' + k[0], k[1], c.cats[k[0]]); }).join('') + '</div></div></section>' +
+      '<section class="card grid" style="gap:8px"><h2 style="font-size:17px">Test na żywo</h2><label class="t-muted" style="font-size:13px">Tekst (np. fragment umowy)<textarea id="psIn" class="in" rows="5" style="margin-top:4px">' + esc(t) + '</textarea></label><button class="btn" data-act="pstest">Pseudonimizuj</button><div><small class="t-muted">Tak widzi to model:</small><div id="psOut" class="card" style="background:var(--surface2);font-size:13px;line-height:1.6;white-space:pre-wrap">' + psHi(ps.text) + '</div></div><small class="t-dim">Ukryto: ' + ps.n + ' · ' + (Object.keys(ps.cnt).map(function (k) { return PSLAB[k] + ' ' + ps.cnt[k]; }).join(', ') || '—') + '</small></section>' +
+      '<section class="card"><h2 style="font-size:17px;margin-bottom:8px">Rejestr wywołań modeli (' + PSLOG.length + ')</h2>' + (PSLOG.length ? '<div class="list">' + PSLOG.slice(0, 12).map(function (r) { return '<div class="row" style="align-items:flex-start"><span style="min-width:0"><small class="t-dim">' + r[0] + ' · ' + esc(r[2]) + '</small><br>' + esc(r[1]) + '<br><small class="t-dim">' + esc(r[4] || 'bez danych wrażliwych') + '</small></span><b class="tab t-green" style="flex:none">🛡 ' + r[3] + '</b></div>'; }).join('') + '</div>' : '<p class="t-dim" style="margin:0">Brak wywołań. Dodaj plik w Asystencie GRAFFI albo użyj „Przeanalizuj z AI” w podglądzie umowy.</p>') + '<small class="t-dim">Rejestr przechowuje tylko liczbę i rodzaj ukrytych danych – nigdy ich treść. Dla RODO: dokumentuje, że dane osobowe nie były przekazywane podmiotom zewnętrznym.</small></section>';
+  }
+  var PSDEMO = 'Umowa nr UM/2026/47/GR zawarta pomiędzy Centrum Medyczne SALUS sp. z o.o., ul. Szosa Chełmińska 120, 87-100 Toruń, NIP 879-123-45-67, reprezentowaną przez Pani Ewa N., a Graffico. Wynagrodzenie: 71 466 zł netto, płatne w terminie 14 dni na rachunek 12 1020 5000 0000 1234 5678 9012. Kontakt: ewa.n@example.com, tel. 600 123 456. Gwarancja 24 miesiące. Kary umowne 0,2% za każdy dzień zwłoki, łącznie nie więcej niż 10% wynagrodzenia.';
+  var ustHtmlPs0 = VIEWS.ustawienia.html;
+  VIEWS.ustawienia.html = function () { if (st.tab === 'rodo') { var h = ustHtmlPs0.call(this), i = h.indexOf('</div>'); return h.slice(0, i + 6) + rodoHtml(); } return ustHtmlPs0.call(this); };
+  var ustOnPs0 = VIEWS.ustawienia.on;
+  VIEWS.ustawienia.on = function (act, el) {
+    var sc = window.scrollY, re = function () { savePs(); render(); window.scrollTo(0, sc); };
+    if (act === 'pstg') { var k = el.dataset.k; if (k.indexOf('cat:') === 0) PSCFG.cats[k.slice(4)] = !PSCFG.cats[k.slice(4)]; else PSCFG[k] = !PSCFG[k]; return re(); }
+    if (act === 'psmode') { PSCFG.mode = el.dataset.v; return re(); }
+    if (act === 'pstest') { PSDEMO = $('#psIn').value; return re(); }
+    return ustOnPs0.call(this, act, el);
+  };
+  /* agenci */
+  var AGPS = [
+    { id: 'pseudo', mod: 'Ochrona danych (RODO)', local: true, name: 'Agent anonimizacji i pseudonimizacji', desc: 'Działa w organizacji, przed każdym wywołaniem modelu zewnętrznego: wykrywa dane wrażliwe (klienci, osoby, NIP/PESEL, adresy, kontakty, rachunki, numery umów), zastępuje je znacznikami, szyfruje mapę i odkodowuje odpowiedź.', model: 'm3', temp: 0, max: 1, web: false, prompt: 'AGENT LOKALNY – nie wysyła danych do modelu zewnętrznego.\n\nReguły wykrywania (kolejność):\n1. E-mail, rachunek bankowy (26 cyfr / IBAN), NIP, REGON, KRS, PESEL.\n2. Numery dokumentów: UM/, NDA/, FV/, ZAM/, OF/, REK/, NCR/.\n3. Telefony (9 cyfr, +48), adresy (ul./al./os./pl. + numer, kod pocztowy + miejscowość).\n4. Słowniki organizacji: nazwy firm z CRM (pełne i skrócone), osoby z kadr, portalu klienta i kontaktów CRM.\n5. Osoby po frazach: Pan/Pani, reprezentowany przez, podpisał.\n6. Kwoty – tylko gdy włączone (domyślnie zostają, bo model liczy).\n\nZnaczniki: [FIRMA_n], [OSOBA_n], [ID_n], [KONTAKT_n], [ADRES_n], [KONTO_n], [DOKUMENT_n], [KWOTA_n] – ta sama wartość = ten sam znacznik w całym dokumencie.\nTryb pseudonimizacji: mapa znaczników zaszyfrowana AES-256-GCM, klucz tylko w organizacji; odpowiedź odkodowywana lokalnie.\nTryb anonimizacji: znaczniki bez numeracji, brak mapy – nieodwracalne (statystyki, eksporty).\nW wersji produkcyjnej: dodatkowo lokalny model NER (rozpoznawanie nazw) uruchamiany na serwerze firmy.' },
+    { id: 'pliki', mod: 'Ochrona danych (RODO)', name: 'Agent analizy dokumentów i załączników', desc: 'Analizuje umowy, oferty, NDA, protokoły i pliki dodane w Asystencie GRAFFI (PDF, Word, Excel, tekst) – zawsze na tekście po pseudonimizacji.', model: 'm1', temp: 0.1, max: 1, web: false, prompt: 'Jesteś analitykiem dokumentów firmy Graffico (umowy z klientami, oferty, NDA, protokoły odbioru, warunki gwarancji, zamówienia).\n\nDostajesz tekst, w którym dane wrażliwe zastąpiono znacznikami [FIRMA_1], [OSOBA_1], [ID_1], [ADRES_1], [KONTO_1], [DOKUMENT_1], [KWOTA_1]. Używaj znaczników dokładnie tak, jak w tekście – organizacja je odkoduje.\n\nZadanie:\n1. Rodzaj dokumentu i strony.\n2. Najważniejsze ustalenia: zakres, kwoty, terminy realizacji i płatności, gwarancja.\n3. Ryzyka dla Graffico: kary umowne (czy jest limit), odpowiedzialność, odstąpienie, siła wyższa, poufność, warunki odbioru.\n4. Co uzgodnić lub poprawić przed podpisem – konkretne zapisy.\n5. Odpowiedz na pytanie użytkownika.\n\nNie udzielasz porady prawnej – wskazujesz kwestie do weryfikacji przez prawnika. Po polsku, punktami.' }
+  ];
+  if (AGORD.indexOf('Ochrona danych (RODO)') < 0) AGORD.splice(AGORD.indexOf('Procesy'), 0, 'Ochrona danych (RODO)');
+  AGPS.forEach(function (a) { AG9.push(a); AGMOD[a.id] = a.mod; if (!AGENTS0.some(function (x) { return x.id === a.id; })) AGENTS0.push(a); var ex = agentById(a.id); if (!ex) AGENTS.push(JSON.parse(JSON.stringify(a))); else ex.local = a.local; });
+  AGDEMO.pseudo = function () { var ps = psMake(PSDEMO); return '<b>Przykład – fragment umowy</b><div style="font-size:13px;line-height:1.6;margin:6px 0">' + psHi(ps.text) + '</div><b>Odkodowane po analizie</b><p style="margin:4px 0;font-size:13px">' + esc(ps.restore(ps.text)) + '</p><small class="t-dim">Ukryto ' + ps.n + ' informacji. Konfiguracja: Ustawienia → Ochrona danych (RODO).</small>'; };
+  AGDEMO.pliki = function () { var d = sysDoc('nda'), ps = psMake(d.text); return ps.restore(psDemo(ps.text, '', d.name)) + psBox(ps); };
 
   var CAL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
   function dateField(attrs, val, label) {
