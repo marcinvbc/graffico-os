@@ -6906,7 +6906,7 @@ return qrcode;
   ];
   var AR = store.get('arena', null) || {};
   if (!AR.sc) AR.sc = JSON.parse(JSON.stringify(ARSC0));
-  if (!AR.xp) AR.xp = {};
+  if (!AR.xp) AR.xp = { 'Dariusz P.': 118 };
   if (!AR.bd) AR.bd = {};
   if (!AR.feed) AR.feed = [['09:42', 'Artur K.', '+35 XP', 'Czysta robota + Seria mistrza ×1,5 – 2161 spawanie liter'], ['09:10', 'Spawalnia i szlif', '−6 h', 'Cios w bossa: zamknięte szlifowanie 2129'], ['08:55', 'Kacper K.', '🎯', 'Nowa odznaka: Snajper'], ['08:30', 'Dariusz P.', '+15 XP', 'Czysta robota – malowanie 2155'], ['22.10', 'Elektryka LED', '+50 GC', 'Tydzień zespołu: terminowość 97%, FTR 93%']];
   if (!AR.kudos) AR.kudos = [['23.10', 'Marek P.', 'Artur K.', 'Pomoc przy ustawieniu przyrządu do liter'], ['22.10', 'Anna D.', 'Kacper K.', 'Rysunek sprawdzony przed frezowaniem – uniknięta poprawka'], ['22.10', 'Paweł M.', 'Łukasz K.', 'Szybka reakcja na budowie w Łodzi']];
@@ -7125,6 +7125,74 @@ return qrcode;
     }
     return botAskAR(q);
   };
+
+  /* ================= GRAFFI ARENA: pościg i doping – miła rywalizacja w zespole ================= */
+  var ARTASK = 35; /* typowe XP za zadanie w czasie i bez poprawek */
+  var ARCHEER = ['Dasz radę! 💪', 'Jeszcze jedno zadanie i jesteś na prowadzeniu!', 'Piękna robota dziś – tak trzymaj!', 'Trzymam kciuki za odbiór 🤞', 'Detal jak z katalogu 👌'];
+  if (!AR.cheers) AR.cheers = [['09:35', 'Marek P.', 'Artur K.', 'Detal jak z katalogu 👌'], ['09:12', 'Anna D.', 'Dariusz P.', 'Trzymam kciuki za odbiór 🤞'], ['08:40', 'Kacper K.', 'Damian B.', 'Dasz radę! 💪']];
+  function arChase(n) {
+    var all = arAll(), i = all.map(function (x) { return x.n; }).indexOf(n), me = all[i];
+    if (i < 0) return null;
+    if (i === 0) { var s = all[1]; return { lead: true, me: me, other: s, gap: me.xp - s.xp }; }
+    var up = all[i - 1], gap = up.xp - me.xp + 1;
+    return { lead: false, me: me, other: up, gap: gap, tasks: Math.max(1, Math.ceil(gap / ARTASK)), pct: Math.max(8, Math.min(96, Math.round((1 - gap / Math.max(gap + 60, 200)) * 100))) };
+  }
+  function arChaseText(c, short) {
+    if (!c) return '';
+    var on = /a$/.test(c.other.n.split(' ')[0]) ? 'nią' : 'nim', top = arAll()[0].n === c.other.n;
+    if (c.lead) return 'Jesteś na prowadzeniu! Tuż za Tobą: ' + esc(c.other.n) + ' (' + c.gap + ' pkt) – trzymaj tempo 💪';
+    var head = (top ? 'Gonisz lidera! ' : '') + 'Przed Tobą: <b>' + esc(c.other.n) + '</b>' + (/\.$/.test(c.other.n) ? ' ' : '. '), win = top ? 'będziesz na prowadzeniu' : 'będziesz przed ' + on;
+    if (c.tasks === 1) return head + 'Brakuje Ci tylko <b>' + c.gap + ' pkt</b> – ' + (short ? 'jedno zadanie w czasie i ' + win + ' 🙂' : 'wykonaj jedno zadanie w czasie i bez poprawek, a ' + win + ' 🙂');
+    return head + 'Brakuje Ci <b>' + c.gap + ' pkt</b> – to ok. ' + c.tasks + ' zadania w czasie i bez poprawek. ' + (short ? 'Do dzieła 🙂' : 'Krok po kroku – dasz radę 🙂');
+  }
+  function arChaseCard(n) {
+    var c = arChase(n); if (!c) return '';
+    var mine = AR.cheers.filter(function (x) { return x[2] === n; }).slice(0, 2);
+    return '<section class="card" style="display:grid;gap:10px;border-color:rgba(242,210,122,.45);background:linear-gradient(135deg,rgba(242,210,122,.10),var(--surface) 60%)"><div style="display:flex;gap:12px;align-items:center"><span style="font-size:34px;line-height:1">' + (c.lead ? '🏆' : '🏁') + '</span><div style="flex:1;min-width:0"><span class="eyebrow">' + (c.lead ? 'Jesteś na prowadzeniu' : 'Pościg') + '</span><div style="font-size:17px;line-height:1.4;margin-top:2px">' + arChaseText(c, false) + '</div></div></div>' +
+      (c.lead ? '' : '<div style="display:grid;gap:4px"><div style="display:flex;justify-content:space-between;font-size:12px"><span>Ty · ' + c.me.xp + ' XP</span><span class="t-gold">' + esc(c.other.n) + ' · ' + c.other.xp + ' XP</span></div><span class="bar" style="height:12px"><i style="width:' + c.pct + '%;background:linear-gradient(90deg,#FF69B2,#F2D27A)"></i></span></div>') +
+      (mine.length ? '<div style="display:grid;gap:6px">' + mine.map(function (m) { return '<div style="font-size:13px;padding:8px 10px;border-radius:12px;background:var(--surface2)">📣 <b style="font-weight:500">' + esc(m[1]) + '</b>: ' + esc(m[3]) + '</div>'; }).join('') + '</div>' : '') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="archeer">📣 Kibicuj komuś z zespołu</button><small class="t-dim" style="align-self:center">Pokazujemy tylko, kogo gonisz – nigdy, kto jest ostatni.</small></div></section>';
+  }
+  function arCheerSheet() {
+    return '<div class="grab"></div><small class="t-dim">Doping nie daje punktów – daje energię 🙂</small><h2>📣 Kibicuj</h2><form data-form="archeer" class="grid" style="gap:10px"><label class="t-muted" style="font-size:13px">Komu<select id="arCw" class="in" style="margin-top:4px">' + arAll().filter(function (p) { return p.n !== AR.me; }).map(function (p) { return '<option>' + esc(p.n) + '</option>'; }).join('') + '</select></label>' +
+      '<div class="seg">' + ARCHEER.map(function (r, i) { return '<button type="button" data-act="arcr" aria-pressed="' + (i === 1) + '">' + esc(r) + '</button>'; }).join('') + '</div><button class="btn p full">Wyślij doping</button></form><button class="btn full" data-act="close">Anuluj</button>';
+  }
+  function arDuels() {
+    var all = arAll(), D = [];
+    for (var i = 1; i < all.length; i++) D.push([all[i], all[i - 1], all[i - 1].xp - all[i].xp + 1]);
+    return D.sort(function (a, b) { return a[2] - b[2]; }).slice(0, 3);
+  }
+  var arGraczD = arGracz; arGracz = function () {
+    var h = arGraczD.apply(this, arguments), k = '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;align-items:start">';
+    var i = h.indexOf(k); return i < 0 ? h : h.slice(0, i) + arChaseCard(AR.me) + h.slice(i);
+  };
+  var arZasadyD = arZasady; arZasady = function () {
+    return arZasadyD.apply(this, arguments).replace('<section class="card" style="border-color:rgba(136,255,88,.45)">', '<section class="card" style="border-color:rgba(242,210,122,.45)"><h2 style="font-size:17px;margin-bottom:8px">Rywalizacja na wesoło 🙂</h2>' + li(['Pościg: widzisz tylko osobę tuż przed Tobą i ile punktów brakuje – „jeszcze jedno zadanie w czasie i jesteś przed nim”', 'Doping od kolegów: krótkie „Dasz radę!” – bez punktów, za to z uśmiechem', 'Nikt nie widzi, kto jest ostatni; komunikaty zawsze zachęcają, nigdy nie zawstydzają', 'Pracownik może wyłączyć pościg w swoich ustawieniach']) + '</section><section class="card" style="border-color:rgba(136,255,88,.45)">');
+  };
+  var arOnD = VIEWS.arena.on; VIEWS.arena.on = function (act, el) {
+    if (act === 'archeer') return openSheet(arCheerSheet());
+    if (act === 'arcr') { $$('[data-act="arcr"]').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); return; }
+    return arOnD.call(this, act, el);
+  };
+  var arSubD = VIEWS.arena.submit; VIEWS.arena.submit = function (f) {
+    if (f.dataset.form === 'archeer') {
+      var to = $('#arCw').value, m = ($('[data-act="arcr"][aria-pressed="true"]') || {}).textContent || ARCHEER[0];
+      AR.cheers.unshift([arNow(), AR.me, to, m]); AR.cheers = AR.cheers.slice(0, 20); arFeed(to, '📣', 'Doping od ' + AR.me + ': ' + m);
+      arSave(); closeSheet(); render(); return arPop('📣 ' + m, AR.me + ' → ' + to);
+    }
+    return arSubD.call(this, f);
+  };
+  var arTvD = VIEWS.arenatv.html; VIEWS.arenatv.html = function () {
+    var d = arDuels();
+    var card = '<section class="card" style="border-color:rgba(242,210,122,.45)"><span class="eyebrow">Pościg dnia 🏁</span>' + d.map(function (x) { return '<div class="ar-tvrow" style="font-size:16px"><span>' + esc(x[0].n) + ' <span class="t-dim">🏁</span> ' + esc(x[1].n) + '</span><b class="t-gold tab">tylko ' + x[2] + ' pkt różnicy!</b></div>'; }).join('') +
+      AR.cheers.slice(0, 2).map(function (c) { return '<div style="font-size:15px;padding:8px 0">📣 ' + esc(c[1]) + ' → <b>' + esc(c[2]) + '</b>: ' + esc(c[3]) + '</div>'; }).join('') + '</section>';
+    return arTvD.apply(this, arguments).replace('<section class="card" id="artvfeed">', card + '<section class="card" id="artvfeed">');
+  };
+  var arTabD = VIEWS.tablet.html; VIEWS.tablet.html = function () {
+    var c = arChase('Artur K.');
+    return arTabD.apply(this, arguments).replace('</small></span><span class="t-pink">→</span></button>', '</small>' + (c ? '<br><small class="t-gold">🏁 ' + arChaseText(c, true) + '</small>' : '') + '</span><span class="t-pink">→</span></button>');
+  };
+  AGDEMO.arcoach = (function (d0) { return function () { var c = arChase(AR.me); return (c ? '<b>Pościg</b><p style="margin:4px 0">' + arChaseText(c, false) + '</p>' : '') + d0(); }; })(AGDEMO.arcoach);
 
   var CAL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
   function dateField(attrs, val, label) {
