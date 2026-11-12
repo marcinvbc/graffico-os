@@ -130,7 +130,7 @@
         '<button class="btn" data-act="reset" style="align-self:flex-start">Resetuj demo (przed kolejną prezentacją)</button>';
     },
     on: function (act) {
-      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms', 'models', 'agents', 'push', 'pts', 'chat', 'rules', 'sitesAdd', 'proj', 'portal', 'carcfg', 'nd', 'role', 'toklim', 'usage', 'pmp', 'derr', 'drules', 'dpts', 'prd', 'dt', 'rcplog', 'rcpcfg', 'mtt', 'snwc', 'snseen', 'mat', 'mdoc', 'pos', 'kompl', 'ship', 'qcrec', 'ncr', 'rek', 'leave', 'bhpi', 'trainp', 'gclog', 'ratek', 'fs', 'fsp', 'fz', 'fincfg', 'fnclosed', 'bistate', 'alr', 'pusers', 'pdoc', 'pdec', 'pmsg', 'pnot', 'rpok', 'rpsig', 'pseudo', 'pslog', 'katalog'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
+      if (act === 'reset') { try { ['done', 'sessions', 'coins', 'closed2155', 'events', 'empdata', 'skills', 'deal', 'sources', 'firms', 'models', 'agents', 'push', 'pts', 'chat', 'rules', 'sitesAdd', 'proj', 'portal', 'carcfg', 'nd', 'role', 'toklim', 'usage', 'pmp', 'derr', 'drules', 'dpts', 'prd', 'dt', 'rcplog', 'rcpcfg', 'mtt', 'snwc', 'snseen', 'mat', 'mdoc', 'pos', 'kompl', 'ship', 'qcrec', 'ncr', 'rek', 'leave', 'bhpi', 'trainp', 'gclog', 'ratek', 'fs', 'fsp', 'fz', 'fincfg', 'fnclosed', 'bistate', 'alr', 'pusers', 'pdoc', 'pdec', 'pmsg', 'pnot', 'rpok', 'rpsig', 'pseudo', 'pslog', 'katalog', 'arena'].forEach(function (k) { localStorage.removeItem('gos.' + k); }); } catch (e) {} location.hash = 'start'; location.reload(); }
     }
   };
 
@@ -6399,7 +6399,7 @@ return qrcode;
       ['Zadania: przydział, przypomnienia, terminy, eskalacje', 'ok', 'Zadania z szablonów procesu, przypomnienia, eskalacja do przełożonego; obsadę podpowiada AI.', 'Automatyczny przydział wg dostępności (dziś rekomendacja agenta).', [['Zadania projektu', 'proj:2161:zadania'], ['Obsada i obciążenie', 'kv:obciazenie']]],
       ['Red flagi', 'ok', 'Projekty, BI, magazyn, cash flow, należności, terminy APS.', '', [['Czerwone flagi', 'pvt:dashboard'], ['Alerty BI', 'bi:alerty']]],
       ['Kontrola jakości: checklisty, podwójna weryfikacja, zatwierdzenia', 'ok', 'Double check i zwolnienie dokumentacji, odbiory międzyoperacyjne, bramki etapów.', '', [['Dokumentacja (double check)', 'pvt:dokumentacja'], ['Odbiory', 'jk:kontrole']]],
-      ['Grywalizacja: cele, wskaźniki, motywacja', 'ok', 'Grafficoiny naliczane z danych, ranking, rywalizacja zespołów, nagrody, cele w CRM.', '', [['Grafficoiny', 'kv:coins'], ['Monitor hali', 'view:hala']]],
+      ['Grywalizacja: cele, wskaźniki, motywacja', 'ok', 'GRAFFI Arena: punkty jakości za każde zadanie, poziomy i sezony, kreator scenariuszy, misje, boss miesiąca, odznaki, kudos, telebim; Grafficoiny jako waluta nagród.', '', [['GRAFFI Arena', 'view:arena'], ['Telebim Areny', 'view:arenatv'], ['Grafficoiny', 'kv:coins']]],
       ['Spójność danych – jedna baza bez przepisywania', 'part', 'Wspólny model danych modułów; eksport całego modelu.', 'Integracje Wapro, FK, KSeF, RCP; porządki w danych demo.', [['Model danych', 'bi:raporty'], ['Integracje', 'st:integracje']]],
       ['Bezpieczeństwo i mobilność', 'part', 'Telefon i komputer, widoki wg roli, wersje i historia, limity tokenów AI per użytkownik.', 'Logowanie, uprawnienia na serwerze, kopie zapasowe, pełny rejestr zmian.', [['Limity i zużycie AI', 'st:modele'], ['Uprawnienia klientów', 'pp:users']]]
     ]],
@@ -6838,6 +6838,292 @@ return qrcode;
       return botRender();
     }
     return botAskK(q);
+  };
+
+  /* ================= CRM: widok „Zagrożone szanse” ================= */
+  var RFIX = { nostep: 'Ustal następny krok z datą', late: 'Wykonaj zaległy krok dziś (telefon / spotkanie)', idle: 'Odnów kontakt – zapytaj o status decyzji', nodec: 'Follow-up decyzji: termin, budżet, ewentualny rabat w granicach marży' };
+  function riskAll() { return activeLeads().map(function (l) { var f = flags(l).filter(function (x) { return x.k !== 'late' || true; }); return { l: l, f: f, e: escLevel(l), sev: f.reduce(function (s, x) { return s + (x.c === 'red' ? 3 : 1) + x.esc * 2; }, 0) }; }).filter(function (r) { return r.f.length && risky(r.l) || r.e; }).sort(function (a, b) { return b.sev - a.sev || leadVal(b.l.value) - leadVal(a.l.value); }); }
+  function riskHtml() {
+    var R = riskAll(), mine = R.filter(function (r) { return pOf(r.l).o === ME; }), sum = R.reduce(function (s, r) { return s + leadVal(r.l.value); }, 0), w = R.reduce(function (s, r) { return s + leadVal(r.l.value) * STAGES[r.l.stage][1] / 100; }, 0), sel = crm.rf || 'all', L = sel === 'mine' ? mine : sel === 'esc' ? R.filter(function (r) { return r.e; }) : R;
+    return '<div class="kpis"><div class="kpi" style="border-color:rgba(255,90,90,.45)"><small class="t-red">Zagrożone szanse</small><b class="t-red">' + R.length + '</b><em class="t-dim">z ' + activeLeads().length + ' otwartych</em></div><div class="kpi"><small>Wartość zagrożona</small><b>' + tys(sum) + '</b><em class="t-dim">ważona ' + tys(w) + '</em></div><div class="kpi"><small>Eskalacje</small><b class="t-orange">' + R.filter(function (r) { return r.e; }).length + '</b><em class="t-dim">kierownik / zarząd</em></div></div>' +
+      '<div class="seg">' + [['all', 'Wszystkie (' + R.length + ')'], ['mine', 'Moje (' + mine.length + ')'], ['esc', 'Z eskalacją (' + R.filter(function (r) { return r.e; }).length + ')']].map(function (t) { return '<button data-act="rfilt" data-v="' + t[0] + '" aria-pressed="' + (sel === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<section class="card"><div class="h-row"><h2>Zagrożone szanse</h2><button class="btn" data-act="agrun" data-id="kwal">🤖 AI Gate – ocena</button></div><div class="list">' + (L.length ? L.map(function (r) { var l = r.l, p = pOf(l); return '<div style="padding:10px 0;border-bottom:1px solid var(--line);display:grid;gap:6px"><button class="lead" data-act="lead" data-id="' + l.id + '" style="border:0;background:none;padding:0;text-align:left;color:var(--fg)"><span style="display:flex;justify-content:space-between;gap:8px"><span style="min-width:0"><b style="font-weight:500">' + esc(l.title) + '</b><br><small class="t-dim">' + esc(l.client) + ' · ' + esc(STAGES[l.stage][0]) + ' · ' + esc(p.o || '—') + (p.n ? ' · krok: ' + esc(p.n) + (p.due ? ' (' + p.due.slice(0, 5) + ')' : '') : '') + '</small></span><b class="tab" style="flex:none">' + esc(l.value) + '</b></span></button><div style="display:flex;gap:4px;flex-wrap:wrap">' + r.f.map(function (x) { return '<span class="chip c-' + x.c + '" style="font-size:11px">' + esc(x.t) + '</span>'; }).join('') + escChip(r.e) + '</div><small class="t-orange">→ ' + esc(r.f.map(function (x) { return RFIX[x.k]; }).filter(function (v, i, a) { return v && a.indexOf(v) === i; })[0] || 'Skontaktuj się z klientem') + '</small></div>'; }).join('') : '<p class="t-dim" style="margin:6px 0">Brak zagrożonych szans w tym filtrze.</p>') + '</div><small class="t-dim">Szansa jest zagrożona, gdy: brak następnego kroku, krok po terminie, brak aktywności dłużej niż ustawiono w regułach (domyślnie 7 dni) albo oferta bez decyzji klienta. Progi: CRM → Mój dzień → Reguły systemu.</small></section>';
+  }
+  var crmTabsR = crmTabs; crmTabs = function () { var n = riskAll().length; return crmTabsR().replace('<button data-act="crmtab" data-t="czat"', '<button data-act="crmtab" data-t="ryzyko" aria-pressed="' + (crm.tab === 'ryzyko') + '">⚠ Zagrożone' + (n ? ' · ' + n : '') + '</button><button data-act="crmtab" data-t="czat"'); };
+  var crmHtmlR = VIEWS.crm.html; VIEWS.crm.html = function () { if (crm.tab === 'ryzyko' && crm.screen !== 'szansa' && crm.screen !== 'kreator' && crm.screen !== 'realizacja') return crmTabs() + riskHtml(); var h = crmHtmlR.apply(this, arguments); return h.replace('<button class="btn p" data-act="addlead">+ Dodaj lead</button>', '<button class="btn p" data-act="addlead">+ Dodaj lead</button><button class="btn" data-act="crmtab" data-t="ryzyko">⚠ Zagrożone szanse (' + riskAll().length + ')</button>'); };
+  document.addEventListener('click', function (e) { var el = e.target.closest('[data-act="rfilt"]'); if (el) { e.stopImmediatePropagation(); crm.rf = el.dataset.v; var sc = window.scrollY; render(); window.scrollTo(0, sc); } }, true);
+
+  /* ================= GRAFFI ARENA – grywalizacja 2.0: sezony, poziomy, punkty jakości, scenariusze, boss, odznaki, kudos, telebim ================= */
+  (function () {
+    var st = document.createElement('style');
+    st.textContent = '.ar-ring{--p:0;width:86px;height:86px;border-radius:50%;background:conic-gradient(var(--pink) calc(var(--p)*1%),rgba(255,255,255,.08) 0);display:grid;place-items:center;flex:none}' +
+      '.ar-ring>span{width:72px;height:72px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-weight:700;font-size:22px}' +
+      '.ar-hp{height:22px;border-radius:12px;background:rgba(255,255,255,.08);overflow:hidden;position:relative}.ar-hp i{display:block;height:100%;background:linear-gradient(90deg,#FF5A5A,#FF9900);transition:width .6s ease}' +
+      '.ar-hp b{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:600}' +
+      '.ar-badge{display:grid;gap:4px;justify-items:center;text-align:center;padding:12px 8px;border-radius:14px;border:1px solid var(--line);background:var(--surface2)}' +
+      '.ar-badge .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px}' +
+      '.ar-badge.off{opacity:.45;filter:grayscale(1)}' +
+      '.ar-r1 .ic{background:rgba(255,255,255,.08)}.ar-r2 .ic{background:rgba(90,200,250,.18);box-shadow:0 0 0 1px rgba(90,200,250,.5)}.ar-r3 .ic{background:rgba(199,125,255,.2);box-shadow:0 0 0 1px rgba(199,125,255,.6)}.ar-r4 .ic{background:linear-gradient(135deg,#F2D27A,#FF9900);box-shadow:0 0 18px rgba(242,210,122,.45)}' +
+      '.ar-pts{display:inline-flex;gap:4px;flex-wrap:wrap}.ar-pts span{font-size:11px;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--line)}' +
+      '.ar-pop{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:9999;pointer-events:none;text-align:center;animation:arPop 2.2s ease forwards}' +
+      '.ar-pop b{display:block;font-size:44px;font-weight:800;background:linear-gradient(90deg,#FF69B2,#F2D27A);-webkit-background-clip:text;background-clip:text;color:transparent}' +
+      '.ar-pop small{display:block;font-size:16px;color:#fff;margin-top:4px}' +
+      '@keyframes arPop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}70%{opacity:1;transform:translate(-50%,-55%) scale(1)}100%{opacity:0;transform:translate(-50%,-80%) scale(.95)}}' +
+      '.ar-conf{position:fixed;top:-12px;width:9px;height:14px;z-index:9998;pointer-events:none;animation:arFall 1.8s ease-in forwards}@keyframes arFall{to{transform:translateY(105vh) rotate(540deg);opacity:.2}}' +
+      '.ar-tv{display:grid;gap:14px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}@media(max-width:860px){.ar-tv{grid-template-columns:1fr}}' +
+      '.ar-tv h1{font-size:30px}.ar-tvrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:18px}' +
+      '.ar-feed{animation:arIn .5s ease}@keyframes arIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
+      '@media(prefers-reduced-motion:reduce){.ar-pop,.ar-conf,.ar-feed{animation:none}.ar-conf{display:none}}';
+    document.head.appendChild(st);
+  })();
+  var ARLV = [[0, 'Praktykant', '🔩'], [300, 'Rzemieślnik', '🔧'], [800, 'Fachowiec', '⚙️'], [1500, 'Mistrz', '🏅'], [2500, 'Legenda Graffico', '👑']];
+  var ARSEASON = { name: 'Sezon 1 · Jesień 2026', theme: 'Zero poprawek', from: '01.10', to: '31.12', left: 69 };
+  var ARTEAM = ['Spawalnia i szlif', 'CNC i cięcie', 'Lakiernia', 'Elektryka LED', 'Montaż wstępny', 'Ekipy montażowe'];
+  var ARBADGE = [
+    ['ftr10', '🎯', 'Snajper', 'pospolita', 1, '10 zadań z rzędu OK za 1. razem'],
+    ['streak5', '🔥', 'Seria 5', 'pospolita', 1, '5 zadań bez poprawek z rzędu'],
+    ['early', '⏱️', 'Przed czasem', 'pospolita', 1, '5 operacji poniżej normy, bez uwag QC'],
+    ['eagle', '🦅', 'Oko sokoła', 'rzadka', 2, 'Zgłoszona usterka, która zatrzymała wadliwą partię'],
+    ['mentor', '🤝', 'Mentor', 'rzadka', 2, 'Przeszkolony kolega awansował w macierzy kompetencji'],
+    ['kaizen', '💡', 'Kaizen', 'rzadka', 2, 'Wdrożone usprawnienie stanowiska'],
+    ['streak25', '☄️', 'Seria 25', 'epicka', 3, '25 zadań bez poprawek z rzędu'],
+    ['site', '🏗️', 'Montaż na medal', 'epicka', 3, '10 montaży bez reklamacji przez 30 dni'],
+    ['boss', '🐉', 'Pogromca bossa', 'epicka', 3, 'Udział w pokonaniu bossa miesiąca'],
+    ['safe', '🦺', 'Strażnik BHP', 'rzadka', 2, 'Kwartał bez zdarzeń BHP i z aktualnymi badaniami'],
+    ['multi', '🧩', 'Człowiek orkiestra', 'epicka', 3, '3 kompetencje na poziomie ●●● w macierzy'],
+    ['legend', '👑', 'Legenda sezonu', 'legendarna', 4, 'Najwyższy wynik jakości w sezonie (wybór zespołu)']
+  ];
+  var AREV = ['Zadanie zakończone', 'Odbiór jakości', 'Montaż zamknięty', 'Zgłoszenie usterki ze zdjęciem', 'Kudos od kolegi', 'Szkolenie ukończone', 'Podsumowanie tygodnia zespołu'];
+  var ARCOND = ['zawsze', 'w normie czasu', 'przed terminem', 'OK za 1. razem', 'seria ≥ 5 bez poprawek', 'zdjęcia i protokół kompletne', 'bez reklamacji 30 dni', 'terminowość zespołu ≥ 95%'];
+  var ARSC0 = [
+    { id: 's1', name: 'Czysta robota', ev: 'Odbiór jakości', c: ['OK za 1. razem'], xp: 15, gc: 5, mult: 1, badge: '', scope: 'osoba', on: true, by: 'System' },
+    { id: 's2', name: 'Przed czasem, bez skrótów', ev: 'Zadanie zakończone', c: ['przed terminem', 'OK za 1. razem'], xp: 20, gc: 0, mult: 1, badge: 'early', scope: 'osoba', on: true, by: 'Kierownik produkcji' },
+    { id: 's3', name: 'Seria mistrza', ev: 'Zadanie zakończone', c: ['seria ≥ 5 bez poprawek'], xp: 0, gc: 0, mult: 1.5, badge: 'streak5', scope: 'osoba', on: true, by: 'System' },
+    { id: 's4', name: 'Oko sokoła', ev: 'Zgłoszenie usterki ze zdjęciem', c: ['zawsze'], xp: 10, gc: 10, mult: 1, badge: '', scope: 'osoba', on: true, by: 'Jakość' },
+    { id: 's5', name: 'Montaż na medal', ev: 'Montaż zamknięty', c: ['zdjęcia i protokół kompletne', 'bez reklamacji 30 dni'], xp: 40, gc: 20, mult: 1, badge: '', scope: 'osoba', on: true, by: 'Kierownik montażu' },
+    { id: 's6', name: 'Tydzień zespołu', ev: 'Podsumowanie tygodnia zespołu', c: ['terminowość zespołu ≥ 95%', 'OK za 1. razem'], xp: 30, gc: 50, mult: 1, badge: '', scope: 'zespół', on: true, by: 'Zarząd' },
+    { id: 's7', name: 'Dziękuję za pomoc', ev: 'Kudos od kolegi', c: ['zawsze'], xp: 5, gc: 0, mult: 1, badge: '', scope: 'osoba', on: false, by: 'Kadry' }
+  ];
+  var AR = store.get('arena', null) || {};
+  if (!AR.sc) AR.sc = JSON.parse(JSON.stringify(ARSC0));
+  if (!AR.xp) AR.xp = {};
+  if (!AR.bd) AR.bd = {};
+  if (!AR.feed) AR.feed = [['09:42', 'Artur K.', '+35 XP', 'Czysta robota + Seria mistrza ×1,5 – 2161 spawanie liter'], ['09:10', 'Spawalnia i szlif', '−6 h', 'Cios w bossa: zamknięte szlifowanie 2129'], ['08:55', 'Kacper K.', '🎯', 'Nowa odznaka: Snajper'], ['08:30', 'Dariusz P.', '+15 XP', 'Czysta robota – malowanie 2155'], ['22.10', 'Elektryka LED', '+50 GC', 'Tydzień zespołu: terminowość 97%, FTR 93%']];
+  if (!AR.kudos) AR.kudos = [['23.10', 'Marek P.', 'Artur K.', 'Pomoc przy ustawieniu przyrządu do liter'], ['22.10', 'Anna D.', 'Kacper K.', 'Rysunek sprawdzony przed frezowaniem – uniknięta poprawka'], ['22.10', 'Paweł M.', 'Łukasz K.', 'Szybka reakcja na budowie w Łodzi']];
+  if (!AR.boss) AR.boss = { name: 'Zaległości lakierni', max: 120, hp: 47, end: '31.10', reward: 'Pizza dla hali + 30 GC dla każdego uczestnika', hits: { 'Lakiernia': 34, 'Spawalnia i szlif': 21, 'Montaż wstępny': 12, 'CNC i cięcie': 6 } };
+  if (!AR.me) AR.me = 'Artur K.';
+  if (!AR.tab) AR.tab = 'gracz';
+  function arSave() { store.set('arena', AR); }
+  function arHash(s) { var h = 7; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 100003; return h; }
+  function arTeam(n) {
+    var e = empByName(n); if (e && e.mont) return 'Ekipy montażowe';
+    if (Object.keys(CREW).some(function (k) { return CREW[k].some(function (m) { return m.replace(/ \(.*\)/, '') === n; }); })) return 'Ekipy montażowe';
+    if (e && e.lv) { var b = -1, bi = 0; e.lv.forEach(function (v, i) { if (v > b) { b = v; bi = i; } }); if (b > 0) return ({ 0: 'Spawalnia i szlif', 1: 'Spawalnia i szlif', 4: 'Spawalnia i szlif', 2: 'CNC i cięcie', 3: 'CNC i cięcie', 5: 'Lakiernia', 6: 'Elektryka LED', 7: 'Montaż wstępny' })[bi] || 'Montaż wstępny'; }
+    return ARTEAM[arHash(n) % 5];
+  }
+  function arP(n) {
+    var e = empByName(n), h = arHash(n), coins = e ? e.coins : 0;
+    var xp = Math.round(coins * 1.6 + h % 900) + (AR.xp[n] || 0);
+    var lv = 0; ARLV.forEach(function (l, i) { if (xp >= l[0]) lv = i; });
+    var nx = ARLV[lv + 1], pct = nx ? Math.round((xp - ARLV[lv][0]) / (nx[0] - ARLV[lv][0]) * 100) : 100;
+    var ftr = 82 + h % 17, on = 80 + (h >> 3) % 19, streak = (h >> 2) % 14 + (n === 'Artur K.' ? 4 : 0);
+    var bd = ARBADGE.filter(function (b, i) { return (h >> i) % 3 === 0 && b[4] < 4; }).map(function (b) { return b[0]; }).concat(AR.bd[n] || []);
+    if (n === 'Artur K.') bd = bd.concat(['kaizen', 'streak5']);
+    var u = {}; bd = bd.filter(function (b) { return u[b] ? 0 : (u[b] = 1); });
+    return { n: n, e: e, team: arTeam(n), xp: xp, lv: lv, nx: nx, pct: pct, ftr: ftr, on: on, stars: Math.round((2.2 + (ftr - 80) / 22) * 10) / 10, streak: streak, coins: coins, bd: bd };
+  }
+  function arAll() { return opsPeople().map(arP).sort(function (a, b) { return b.xp - a.xp; }); }
+  function arTeams() {
+    var t = {}; arAll().forEach(function (p) { var x = t[p.team] = t[p.team] || { n: p.team, ppl: [], xp: 0, ftr: 0, on: 0 }; x.ppl.push(p); x.xp += p.xp; x.ftr += p.ftr; x.on += p.on; });
+    return Object.keys(t).map(function (k) { var x = t[k], c = x.ppl.length; x.avg = Math.round(x.xp / c); x.ftr = Math.round(x.ftr / c); x.on = Math.round(x.on / c); x.score = Math.round(x.ftr * 0.5 + x.on * 0.5) * 10 + Math.round(x.avg / 20); return x; }).sort(function (a, b) { return b.score - a.score; });
+  }
+  function arBadge(id) { return ARBADGE.filter(function (b) { return b[0] === id; })[0]; }
+  function arStars(v) { var f = Math.round(v); return '<span class="t-gold" aria-label="' + v + ' na 3">' + '★★★'.slice(0, f) + '<span class="t-dim">' + '★★★'.slice(f) + '</span></span>'; }
+  function arTasks(n) {
+    var T = [['2161', 'Spawanie liter 3D – lico', 'OK za 1. razem', 3, [['Termin', 10], ['Norma', 0], ['Jakość ★★★', 15], ['Seria ×1,5', 10]]], ['2169', 'Konstrukcja witacza – spawanie ramy', 'OK za 1. razem', 3, [['Termin', 10], ['Norma', 10], ['Jakość ★★★', 15]]], ['2129', 'Szlif kasetonów', 'drobna uwaga QC', 2, [['Termin', 10], ['Norma', 10], ['Jakość ★★', 8]]], ['2155', 'Przyrząd do liter > 1 m', 'usprawnienie', 3, [['Kaizen', 40], ['Odznaka 💡', 0]]]];
+    var h = arHash(n); return h % 2 ? T : T.slice(1).concat([T[0]]);
+  }
+  function arQuests(p) {
+    return [['Zrób 3 zadania bez poprawek', Math.min(3, p.streak), 3, '+30 XP'], ['Zgłoś usterkę lub ryzyko ze zdjęciem', p.n === 'Artur K.' ? 0 : 1, 1, '+10 GC'], ['Daj kudos koledze z innej zmiany', AR.kudos.some(function (k) { return k[1] === p.n; }) ? 1 : 0, 1, '+5 XP'], ['Ukończ moduł e-learning: spawanie liter > 1 m', 1, 2, '+20 XP · odznaka']];
+  }
+  function arPop(big, small) {
+    var d = document.createElement('div'); d.className = 'ar-pop'; d.innerHTML = '<b>' + big + '</b><small>' + esc(small) + '</small>'; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2300);
+    var C = ['#E3006F', '#FF69B2', '#F2D27A', '#88FF58', '#5AC8FA', '#C77DFF'];
+    for (var i = 0; i < 36; i++) { var c = document.createElement('i'); c.className = 'ar-conf'; c.style.left = (Math.random() * 100) + 'vw'; c.style.background = C[i % C.length]; c.style.animationDelay = (Math.random() * .4) + 's'; c.style.borderRadius = i % 2 ? '50%' : '2px'; document.body.appendChild(c); (function (c) { setTimeout(function () { c.remove(); }, 2400); })(c); }
+  }
+  function arNow() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function arFeed(who, val, txt) { AR.feed.unshift([arNow(), who, val, txt]); AR.feed = AR.feed.slice(0, 30); arSave(); }
+  /* Grafficoiny przyznawane w innych modułach trafiają też do Areny jako XP */
+  var gcAwardAR = gcAward; gcAward = function (name, pts, why) { gcAwardAR(name, pts, why); AR.xp[name] = (AR.xp[name] || 0) + pts; arFeed(name, '+' + pts + ' XP', why); };
+  function arPlayerSel() { return '<label class="t-muted" style="font-size:13px;display:flex;gap:8px;align-items:center">Karta gracza<select class="in" id="arMe" style="max-width:220px">' + arAll().map(function (p) { return '<option' + (p.n === AR.me ? ' selected' : '') + '>' + esc(p.n) + '</option>'; }).join('') + '</select></label>'; }
+  function arGracz() {
+    var p = arP(AR.me), all = arAll(), rk = all.map(function (x) { return x.n; }).indexOf(p.n) + 1, L = ARLV[p.lv];
+    var skills = p.e && p.e.lv ? SKILLS.map(function (s, i) { return [s, p.e.lv[i] || 0]; }).filter(function (s) { return s[1] > 0; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 4) : [];
+    return arPlayerSel() +
+      '<section class="card" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;border-color:rgba(227,0,111,.45);background:linear-gradient(135deg,rgba(227,0,111,.14),var(--surface) 60%)"><div class="ar-ring" style="--p:' + p.pct + '"><span>' + L[2] + '</span></div><div style="flex:1;min-width:200px;display:grid;gap:4px"><span class="eyebrow">' + esc(p.team) + ' · ' + ARSEASON.name + '</span><h2 style="font-size:24px;margin:0">' + esc(p.n) + '</h2><b style="font-size:16px">Poziom ' + (p.lv + 1) + ' – ' + L[1] + '</b><small class="t-muted">' + p.xp + ' XP' + (p.nx ? ' · do poziomu „' + p.nx[1] + '” brakuje ' + (p.nx[0] - p.xp) + ' XP' : ' · najwyższy poziom') + '</small></div>' +
+      '<div class="kpis" style="margin:0;flex:1;min-width:260px;grid-template-columns:repeat(2,minmax(0,1fr))"><div class="kpi" style="padding:10px"><small>Jakość zadań</small><b style="font-size:20px">' + arStars(p.stars) + '</b><em class="t-dim">OK za 1. razem ' + p.ftr + '%</em></div><div class="kpi" style="padding:10px"><small>Seria bez poprawek</small><b style="font-size:20px">🔥 ' + p.streak + '</b><em class="t-dim">' + (p.streak >= 5 ? 'mnożnik ×1,5 aktywny' : 'od 5 – mnożnik ×1,5') + '</em></div><div class="kpi" style="padding:10px"><small>Terminowość</small><b style="font-size:20px">' + p.on + '%</b></div><div class="kpi" style="padding:10px"><small>Grafficoiny</small><b style="font-size:20px" class="t-gold">' + p.coins + '</b><em class="t-dim">miejsce ' + rk + ' w sezonie</em></div></div></section>' +
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;align-items:start">' +
+      '<section class="card"><div class="h-row"><h2 style="font-size:17px">Misje tygodnia</h2><small class="t-dim">reset w poniedziałek</small></div><div class="list">' + arQuests(p).map(function (q) { var d = q[1] >= q[2]; return '<div style="padding:9px 0;border-bottom:1px solid var(--line);display:grid;gap:6px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:14px"><span>' + (d ? '✅ ' : '') + esc(q[0]) + '</span><span class="chip ' + (d ? 'c-green' : '') + '" style="flex:none">' + q[3] + '</span></div><span class="bar"><i style="width:' + Math.round(q[1] / q[2] * 100) + '%"></i></span><small class="t-dim">' + q[1] + ' / ' + q[2] + '</small></div>'; }).join('') + '</div><small class="t-dim">Misje dobiera Coach GRAFFI z danych: słabsze wskaźniki, luki w kompetencjach, wąskie gardła APS.</small></section>' +
+      '<section class="card"><div class="h-row"><h2 style="font-size:17px">Ostatnie zadania – punkty jakości</h2></div><div class="list">' + arTasks(p.n).map(function (t) { var s = t[4].reduce(function (a, x) { return a + x[1]; }, 0); return '<div style="padding:9px 0;border-bottom:1px solid var(--line);display:grid;gap:5px"><div style="display:flex;justify-content:space-between;gap:8px"><span><b class="num t-pink">' + t[0] + '</b> ' + esc(t[1]) + '<br><small class="t-dim">' + esc(t[2]) + ' · ' + arStars(t[3]) + '</small></span><b class="tab" style="flex:none">+' + s + ' XP</b></div><span class="ar-pts">' + t[4].map(function (x) { return '<span>' + esc(x[0]) + (x[1] ? ' +' + x[1] : '') + '</span>'; }).join('') + '</span></div>'; }).join('') + '</div><small class="t-dim">XP liczy system z RCP i odbioru jakości – za jakość i termin, nie za liczbę sztuk.</small></section>' +
+      '<section class="card"><div class="h-row"><h2 style="font-size:17px">Odznaki</h2><button class="btn" style="min-height:32px;font-size:12px" data-act="artab" data-v="odznaki">Wszystkie</button></div><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px">' + p.bd.slice(0, 6).map(function (id) { var b = arBadge(id); return '<div class="ar-badge ar-r' + b[4] + '"><span class="ic">' + b[1] + '</span><b style="font-size:12px">' + esc(b[2]) + '</b><small class="t-dim" style="font-size:11px">' + b[3] + '</small></div>'; }).join('') + '</div></section>' +
+      (skills.length ? '<section class="card"><div class="h-row"><h2 style="font-size:17px">Ścieżka mistrza</h2><small class="t-dim">z macierzy kompetencji</small></div><div class="list">' + skills.map(function (s) { return '<div class="row"><span>' + esc(s[0]) + '<br><small class="t-dim">' + (s[1] < 3 ? 'następny stopień: 4 zadania OK za 1. razem + ocena mentora' : 'ekspert – może zdobyć odznakę Mentor') + '</small></span><b class="t-pink" style="letter-spacing:2px">' + '●●●'.slice(0, s[1]) + '<span class="t-dim">' + '●●●'.slice(s[1]) + '</span></b></div>'; }).join('') + '</div></section>' : '') +
+      '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" data-act="arkudos">👏 Daj kudos</button><button class="btn" data-act="agrun" data-id="arcoach">🤖 Coach GRAFFI – moje cele</button><button class="btn" data-act="arcoins">🪙 Nagrody za Grafficoiny</button></div>';
+  }
+  function arBossHtml(big) {
+    var b = AR.boss, pct = Math.max(0, Math.round(b.hp / b.max * 100));
+    return '<section class="card" style="border-color:rgba(255,90,90,.45);display:grid;gap:10px;background:linear-gradient(160deg,rgba(255,90,90,.12),var(--surface) 55%)"><div style="display:flex;gap:12px;align-items:center"><span style="font-size:' + (big ? 64 : 44) + 'px;line-height:1">🐉</span><div style="flex:1;min-width:0"><span class="eyebrow">Boss miesiąca · do ' + b.end + '</span><h2 style="margin:2px 0 0;font-size:' + (big ? 28 : 20) + 'px">' + esc(b.name) + '</h2><small class="t-muted">Cała hala walczy razem: każda zamknięta godzina zaległości to cios. Nagroda: ' + esc(b.reward) + '.</small></div></div>' +
+      '<div class="ar-hp" style="height:' + (big ? 34 : 22) + 'px"><i style="width:' + pct + '%"></i><b>' + (b.hp > 0 ? b.hp + ' / ' + b.max + ' h zaległości' : 'POKONANY! 🎉') + '</b></div>' +
+      '<div style="display:grid;gap:4px">' + Object.keys(b.hits).sort(function (x, y) { return b.hits[y] - b.hits[x]; }).map(function (k) { return '<div style="display:flex;justify-content:space-between;font-size:' + (big ? 17 : 13) + 'px"><span>⚔️ ' + esc(k) + '</span><b class="tab">−' + b.hits[k] + ' h</b></div>'; }).join('') + '</div>' +
+      (big ? '' : '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="arhit">⚔️ Symuluj: zamknięte zlecenie w lakierni</button><button class="btn" data-act="agrun" data-id="armaster">🤖 Mistrz gry – następny boss</button></div>') + '</section>';
+  }
+  function arLiga() {
+    var T = arTeams(), mx = T[0].score;
+    return '<div class="kpis"><div class="kpi"><small>Sezon</small><b style="font-size:18px">' + ARSEASON.name + '</b><em class="t-dim">motyw: ' + ARSEASON.theme + ' · zostało ' + ARSEASON.left + ' dni</em></div><div class="kpi"><small>Lider ligi</small><b style="font-size:18px">' + esc(T[0].n) + '</b><em class="t-gold">' + T[0].score + ' pkt</em></div><div class="kpi"><small>OK za 1. razem – firma</small><b class="t-green">' + Math.round(T.reduce(function (s, t) { return s + t.ftr; }, 0) / T.length) + '%</b></div></div>' +
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;align-items:start">' +
+      '<section class="card"><div class="h-row"><h2 style="font-size:17px">Liga zespołów</h2><small class="t-dim">wynik = jakość 50% + terminowość 50% + XP</small></div>' + T.map(function (t, i) { return '<div style="padding:9px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:8px"><span>' + (i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1) + '.') + ' <b style="font-weight:500">' + esc(t.n) + '</b> <small class="t-dim">· ' + t.ppl.length + ' os.</small></span><b class="tab t-gold">' + t.score + '</b></div><div class="bar" style="margin:6px 0 4px"><i style="width:' + Math.round(t.score / mx * 100) + '%"></i></div><small class="t-dim">OK za 1. razem ' + t.ftr + '% · terminowość ' + t.on + '% · śr. ' + t.avg + ' XP/os.</small></div>'; }).join('') + '<small class="t-dim" style="display:block;margin-top:8px">Publicznie widać zespoły. Wynik indywidualny widzi pracownik i jego kierownik; TOP 3 na telebimie tylko za zgodą.</small></section>' +
+      arBossHtml(false) + '</div>' +
+      '<section class="card"><div class="h-row"><h2 style="font-size:17px">Na żywo</h2><button class="btn" data-act="artv">📺 Pokaż na telebimie</button></div><div class="list">' + AR.feed.slice(0, 8).map(function (f) { return '<div class="row ar-feed"><span><small class="t-dim">' + f[0] + '</small> <b style="font-weight:500">' + esc(f[1]) + '</b><br><small class="t-dim">' + esc(f[3]) + '</small></span><b class="tab t-gold" style="flex:none">' + esc(f[2]) + '</b></div>'; }).join('') + '</div></section>' +
+      '<section class="card"><div class="h-row"><h2 style="font-size:17px">Kudos – podziękowania między pracownikami</h2><button class="btn p" data-act="arkudos">👏 Daj kudos</button></div><div class="list">' + AR.kudos.slice(0, 6).map(function (k) { return '<div class="row"><span>👏 <b style="font-weight:500">' + esc(k[1]) + '</b> → <b style="font-weight:500">' + esc(k[2]) + '</b><br><small class="t-dim">' + esc(k[3]) + '</small></span><small class="t-dim" style="flex:none">' + k[0] + '</small></div>'; }).join('') + '</div><small class="t-dim">Limit 3 kudos tygodniowo na osobę; nie można dać sobie ani w kółko tej samej osobie.</small></section>';
+  }
+  function arScenText(s) { return 'KIEDY <b>' + esc(s.ev) + '</b> JEŚLI <b>' + s.c.map(esc).join('</b> i <b>') + '</b> TO <b>' + [s.xp ? '+' + s.xp + ' XP' : '', s.gc ? '+' + s.gc + ' GC' : '', s.mult > 1 ? 'mnożnik ×' + String(s.mult).replace('.', ',') : '', s.badge ? 'odznaka ' + arBadge(s.badge)[1] + ' ' + arBadge(s.badge)[2] : ''].filter(Boolean).join(', ') + '</b>' + (s.scope === 'zespół' ? ' dla całego zespołu' : ''); }
+  function arScen() {
+    return '<div class="alert a-green" style="font-size:13px"><span class="chip c-green">NO-CODE</span><span>Kierownik sam układa reguły punktacji: zdarzenie z systemu + warunki + nagroda. Bez programisty, ze zmianami zapisywanymi w historii.</span></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" data-act="arnew">+ Nowy scenariusz</button><button class="btn" data-act="agrun" data-id="arfair">🤖 Sędzia fair play – sprawdź reguły</button></div>' +
+      '<section class="card"><div class="list">' + AR.sc.map(function (s, i) { return '<div style="padding:12px 0;border-bottom:1px solid var(--line);display:grid;gap:8px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><span><b>' + esc(s.name) + '</b> <small class="t-dim">· ' + esc(s.scope) + ' · autor: ' + esc(s.by) + '</small></span><button class="chip ' + (s.on ? 'c-green' : '') + '" data-act="artoggle" data-i="' + i + '" style="cursor:pointer;border:1px solid var(--line2);flex:none">' + (s.on ? 'aktywny' : 'wyłączony') + '</button></div><span style="font-size:14px;line-height:1.5">' + arScenText(s) + '</span><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" style="min-height:32px;font-size:12px" data-act="artest" data-i="' + i + '">▶ Testuj na przykładzie</button>' + (i >= ARSC0.length ? '<button class="btn" style="min-height:32px;font-size:12px" data-act="ardel" data-i="' + i + '">Usuń</button>' : '') + '</div></div>'; }).join('') + '</div></section>' +
+      '<section class="card"><h2 style="font-size:17px;margin-bottom:8px">Pomysły na kolejne scenariusze</h2><div class="list">' + [['Nocny strażnik', 'Zgłoszenie ryzyka BHP na zmianie II → +15 XP'], ['Pierwszy raz', 'Pierwsze samodzielne zadanie na nowej maszynie, OK za 1. razem → odznaka + 25 XP'], ['Zero reklamacji', 'Kwartał bez reklamacji w zespole → dzień integracyjny'], ['Ratunek terminu', 'Zlecenie z czerwoną flagą APS zamknięte w terminie → +30 XP dla zespołu']].map(function (x) { return '<div class="row"><span><b style="font-weight:500">' + x[0] + '</b><br><small class="t-dim">' + x[1] + '</small></span></div>'; }).join('') + '</div></section>';
+  }
+  function arNewSheet() {
+    var opt = function (a, sel) { return a.map(function (x) { return '<option' + (x === sel ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join(''); };
+    return '<div class="grab"></div><small class="t-dim">Kreator scenariusza</small><h2>Nowa reguła punktacji</h2><form data-form="arnew" class="grid" style="gap:10px">' +
+      '<label class="t-muted" style="font-size:13px">Nazwa<input id="arN" class="in" required maxlength="40" placeholder="np. Lakier bez poprawek" style="margin-top:4px"></label>' +
+      '<label class="t-muted" style="font-size:13px">KIEDY – zdarzenie w systemie<select id="arE" class="in" style="margin-top:4px">' + opt(AREV, 'Odbiór jakości') + '</select></label>' +
+      '<div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><label class="t-muted" style="font-size:13px">JEŚLI – warunek 1<select id="arC1" class="in" style="margin-top:4px">' + opt(ARCOND, 'OK za 1. razem') + '</select></label><label class="t-muted" style="font-size:13px">i warunek 2<select id="arC2" class="in" style="margin-top:4px"><option value="">—</option>' + opt(ARCOND.slice(1), '') + '</select></label></div>' +
+      '<div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px"><label class="t-muted" style="font-size:13px">TO – XP<input id="arX" class="in" type="number" min="0" max="200" value="20" style="margin-top:4px"></label><label class="t-muted" style="font-size:13px">Grafficoiny<input id="arG" class="in" type="number" min="0" max="200" value="5" style="margin-top:4px"></label><label class="t-muted" style="font-size:13px">Mnożnik<select id="arM" class="in" style="margin-top:4px"><option value="1">brak</option><option value="1.25">×1,25</option><option value="1.5">×1,5</option><option value="2">×2</option></select></label></div>' +
+      '<div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><label class="t-muted" style="font-size:13px">Odznaka<select id="arB" class="in" style="margin-top:4px"><option value="">—</option>' + ARBADGE.map(function (b) { return '<option value="' + b[0] + '">' + b[1] + ' ' + esc(b[2]) + '</option>'; }).join('') + '</select></label><label class="t-muted" style="font-size:13px">Dla kogo<select id="arS" class="in" style="margin-top:4px"><option>osoba</option><option>zespół</option></select></label></div>' +
+      '<small class="t-dim">Sędzia fair play sprawdzi regułę przed włączeniem: czy nie nagradza ilości kosztem jakości i czy da się ją „nabić”.</small><button class="btn p full">Zapisz i włącz</button></form><button class="btn full" data-act="close">Anuluj</button>';
+  }
+  function arKudosSheet() {
+    return '<div class="grab"></div><small class="t-dim">Kudos · zostały Ci 2 z 3 w tym tygodniu</small><h2>👏 Podziękuj koledze</h2><form data-form="arkudos" class="grid" style="gap:10px"><label class="t-muted" style="font-size:13px">Komu<select id="arKw" class="in" style="margin-top:4px">' + arAll().filter(function (p) { return p.n !== AR.me; }).map(function (p) { return '<option>' + esc(p.n) + '</option>'; }).join('') + '</select></label>' +
+      '<div class="seg">' + ['Pomoc przy zleceniu', 'Dobra rada', 'Uratowany termin', 'Czyste stanowisko', 'Wyłapany błąd'].map(function (r, i) { return '<button type="button" data-act="arkr" aria-pressed="' + (i === 0) + '">' + r + '</button>'; }).join('') + '</div>' +
+      '<label class="t-muted" style="font-size:13px">Za co (opcjonalnie)<input id="arKt" class="in" maxlength="80" placeholder="np. pomoc przy ustawieniu przyrządu" style="margin-top:4px"></label><button class="btn p full">Wyślij kudos (+5 XP dla odbiorcy)</button></form><button class="btn full" data-act="close">Anuluj</button>';
+  }
+  function arOdznaki() {
+    var p = arP(AR.me), all = arAll();
+    return arPlayerSel() + '<section class="card"><div class="h-row"><h2 style="font-size:17px">Kolekcja odznak – ' + esc(p.n) + '</h2><small class="t-dim">' + p.bd.length + ' z ' + ARBADGE.length + '</small></div><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">' + ARBADGE.map(function (b) { var has = p.bd.indexOf(b[0]) > -1, cnt = all.filter(function (x) { return x.bd.indexOf(b[0]) > -1; }).length; return '<div class="ar-badge ar-r' + b[4] + (has ? '' : ' off') + '"><span class="ic">' + (has ? b[1] : '🔒') + '</span><b style="font-size:13px">' + esc(b[2]) + '</b><small class="' + (b[4] === 4 ? 't-gold' : b[4] === 3 ? 't-pink' : 't-dim') + '" style="font-size:11px">' + b[3] + '</small><small class="t-muted" style="font-size:11px;line-height:1.3">' + esc(b[5]) + '</small><small class="t-dim" style="font-size:11px">ma ' + cnt + ' os.</small></div>'; }).join('') + '</div></section>' +
+      '<section class="card"><h2 style="font-size:17px;margin-bottom:8px">Poziomy w sezonie</h2><div class="list">' + ARLV.map(function (l, i) { return '<div class="row"><span>' + l[2] + ' <b style="font-weight:500">Poziom ' + (i + 1) + ' – ' + l[1] + '</b></span><span class="t-dim">od ' + l[0] + ' XP</span></div>'; }).join('') + '</div><small class="t-dim">Po sezonie XP wraca do zera, a zdobyte odznaki i poziom mistrzowski zostają w kartotece pracownika.</small></section>';
+  }
+  function arZasady() {
+    return '<section class="card"><h2 style="font-size:17px;margin-bottom:8px">Jak działa Arena</h2><div class="list">' + [
+      ['XP – punkty jakości', 'Za każde zadanie: termin, norma czasu, odbiór jakości (gwiazdki), komplet dokumentacji. Mnożnik za serię bez poprawek.'],
+      ['Grafficoiny – waluta', 'Wymieniane na nagrody w sklepie (dzień wolny, bony, odzież). XP buduje poziom, Grafficoiny kupują nagrody.'],
+      ['Sezony co kwartał', 'Nowy motyw sezonu (np. „Zero poprawek”), reset XP, ranking od nowa – nowi pracownicy mają równe szanse.'],
+      ['Boss miesiąca', 'Wspólny cel całej hali, np. zaległości w wąskim gardle. Pokonany boss = nagroda dla wszystkich uczestników.'],
+      ['Misje tygodnia', 'Osobiste cele dobierane przez Coacha GRAFFI: słabsze wskaźniki, kompetencje do rozwinięcia.'],
+      ['Telebim na hali', 'Liga zespołów, boss, nowe odznaki i kudos na żywo – uruchamiany z kodu QR.']].map(function (x) { return '<div class="row" style="align-items:flex-start"><span><b style="font-weight:500">' + x[0] + '</b><br><small class="t-dim">' + x[1] + '</small></span></div>'; }).join('') + '</div></section>' +
+      '<section class="card" style="border-color:rgba(136,255,88,.45)"><h2 style="font-size:17px;margin-bottom:8px">Fair play i RODO</h2>' + li(['Punkty tylko z danych zweryfikowanych: RCP, odbiór jakości, reklamacje – nikt nie wpisuje ich ręcznie', 'Brak punktów ujemnych – za błąd przepada tylko seria, nie dorobek', 'XP liczone względem normy gniazda – spawacz i lakiernik mają równe szanse', 'Nagradzamy jakość i termin, nigdy samą liczbę sztuk', 'Ranking indywidualny widzi pracownik i jego kierownik; publicznie zespoły i TOP 3 za zgodą', 'Regulamin nagród uzgodniony z pracownikami; Arena nie wpływa na wynagrodzenie bez osobnej decyzji']) + '</section>';
+  }
+  function arModSheet() {
+    var R = [['Grafficoiny, ranking, nagrody', 'było', 'Zostaje jako waluta i sklep nagród', 'kv:coins'], ['Punkty jakości (XP) za każde zadanie', 'dodane', 'Termin, norma, gwiazdki z odbioru, komplet dokumentacji', 'gracz'], ['Poziomy i sezony', 'dodane', '5 poziomów od Praktykanta do Legendy, sezon co kwartał', 'odznaki'], ['Seria bez poprawek i mnożnik', 'dodane', 'Od 5 zadań z rzędu – XP ×1,5', 'gracz'], ['Kreator scenariuszy (no-code)', 'dodane', 'KIEDY zdarzenie JEŚLI warunki TO nagroda – ustawia kierownik', 'scen'], ['Misje tygodnia', 'dodane', 'Osobiste cele od Coacha GRAFFI', 'gracz'], ['Boss miesiąca', 'dodane', 'Wspólny cel hali z paskiem życia', 'liga'], ['Liga zespołów', 'rozszerzone', 'Było: średnia Grafficoinów → jakość + terminowość + XP', 'liga'], ['Odznaki z rzadkością', 'dodane', '12 odznak: pospolite, rzadkie, epickie, legendarna', 'odznaki'], ['Kudos między pracownikami', 'dodane', 'Podziękowania z limitem 3 tygodniowo', 'liga'], ['Telebim Areny', 'dodane', 'Pełny ekran na hali, QR do uruchomienia', 'tv'], ['3 agentów AI', 'dodane', 'Coach GRAFFI, Sędzia fair play, Mistrz gry', 'liga'], ['Fair play i RODO', 'dodane', 'Bez punktów ujemnych, normalizacja, prywatny ranking', 'zasady']];
+    var C = { 'było': '', rozszerzone: 'c-orange', dodane: 'c-green' };
+    return '<div class="grab"></div><small class="t-dim">Propozycja dla Graffico</small><h2>Grywalizacja 2.0 – GRAFFI Arena</h2><p class="t-muted" style="margin:0;font-size:14px">Cele, wskaźniki i motywacja zespołów do terminowej, jakościowej i efektywnej pracy – w formie gry.</p><div class="list">' + R.map(function (r) { return '<div class="row" style="align-items:center;gap:8px"><span style="min-width:0"><b style="font-weight:500">' + esc(r[0]) + '</b> <span class="chip ' + C[r[1]] + '" style="font-size:11px">' + r[1] + '</span><br><small class="t-dim">' + esc(r[2]) + '</small></span><button class="btn" style="min-height:32px;font-size:12px;flex:none" data-act="armshow" data-v="' + r[3] + '">Pokaż</button></div>'; }).join('') + '</div><button class="btn full" data-act="close">Zamknij</button>';
+  }
+  VIEWS.arena = {
+    title: 'GRAFFI Arena', sub: 'GRYWALIZACJA · ' + ARSEASON.name.toUpperCase(),
+    html: function () {
+      var tabs = '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="armod">Grywalizacja 2.0 ✓</button><button class="btn" data-act="artv">📺 Telebim</button>' + qrvBtn('arenatv') + '</div><div class="seg">' + [['gracz', 'Moja karta'], ['liga', 'Liga, boss i kudos'], ['scen', 'Scenariusze punktów'], ['odznaki', 'Odznaki i poziomy'], ['zasady', 'Zasady fair play']].map(function (t) { return '<button data-act="artab" data-v="' + t[0] + '" aria-pressed="' + (AR.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+      return tabs + ({ gracz: arGracz, liga: arLiga, scen: arScen, odznaki: arOdznaki, zasady: arZasady }[AR.tab] || arGracz)();
+    },
+    mount: function () {
+      var n = $('#nav [data-go="kadry"]'); if (n) n.setAttribute('aria-current', 'page');
+      var s = $('#arMe'); if (s) s.addEventListener('change', function () { AR.me = s.value; arSave(); render(); });
+    },
+    on: function (act, el) {
+      var sc = window.scrollY, re = function () { render(); window.scrollTo(0, sc); };
+      if (act === 'artab') { AR.tab = el.dataset.v; arSave(); closeSheet(); render(); return window.scrollTo(0, 0); }
+      if (act === 'armod') return openSheet(arModSheet());
+      if (act === 'armshow') { var v = el.dataset.v; closeSheet(); if (v === 'tv') return go('arenatv'); if (v === 'kv:coins') { kd.view = 'coins'; return go('kadry'); } AR.tab = v; arSave(); render(); return window.scrollTo(0, 0); }
+      if (act === 'artv') return go('arenatv');
+      if (act === 'arcoins') { kd.view = 'coins'; return go('kadry'); }
+      if (act === 'arkudos') return openSheet(arKudosSheet());
+      if (act === 'arkr') { $$('[data-act="arkr"]').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); return; }
+      if (act === 'arnew') return openSheet(arNewSheet());
+      if (act === 'artoggle') { var s = AR.sc[+el.dataset.i]; s.on = !s.on; arSave(); re(); return toast('Scenariusz „' + s.name + '” ' + (s.on ? 'włączony' : 'wyłączony')); }
+      if (act === 'ardel') { var r = AR.sc.splice(+el.dataset.i, 1)[0]; arSave(); re(); return toast('Usunięto scenariusz „' + r.name + '”'); }
+      if (act === 'artest') {
+        var s2 = AR.sc[+el.dataset.i], who = s2.scope === 'zespół' ? arTeam(AR.me) : AR.me, base = s2.xp || 20, xp = Math.round(base * (s2.mult || 1));
+        if (!s2.on) return toast('Scenariusz jest wyłączony – włącz go, aby zadziałał');
+        AR.xp[AR.me] = (AR.xp[AR.me] || 0) + xp; if (s2.badge) { (AR.bd[AR.me] = AR.bd[AR.me] || []).push(s2.badge); }
+        arFeed(who, '+' + xp + ' XP', s2.name + ' – test na zleceniu 2169');
+        arPop('+' + xp + ' XP' + (s2.gc ? ' · +' + s2.gc + ' GC' : ''), s2.name + (s2.badge ? ' · odznaka ' + arBadge(s2.badge)[2] : '') + ' → ' + who);
+        return re();
+      }
+      if (act === 'arhit') {
+        var b = AR.boss; if (b.hp <= 0) return toast('Boss już pokonany – Mistrz gry przygotuje następnego');
+        var d = Math.min(b.hp, 6 + Math.round(Math.random() * 6)); b.hp -= d; b.hits['Lakiernia'] = (b.hits['Lakiernia'] || 0) + d; arFeed('Lakiernia', '−' + d + ' h', 'Cios w bossa: zamknięte malowanie proszkowe');
+        if (b.hp <= 0) { arPop('BOSS POKONANY!', b.reward); arFeed('Cała hala', '🐉', 'Pokonany boss: ' + b.name + ' – ' + b.reward); } else arPop('−' + d + ' h', 'Cios w bossa „' + b.name + '”');
+        arSave(); return re();
+      }
+    },
+    submit: function (f) {
+      if (f.dataset.form === 'arnew') {
+        var c = [$('#arC1').value]; if ($('#arC2').value && $('#arC2').value !== c[0]) c.push($('#arC2').value);
+        var s = { id: 'u' + Date.now(), name: $('#arN').value.trim() || 'Nowy scenariusz', ev: $('#arE').value, c: c, xp: Math.max(0, +$('#arX').value || 0), gc: Math.max(0, +$('#arG').value || 0), mult: +$('#arM').value || 1, badge: $('#arB').value, scope: $('#arS').value, on: true, by: roleOf()[0] };
+        var warn = (s.ev === 'Zadanie zakończone' && c.indexOf('zawsze') > -1) ? ' Sędzia fair play: reguła nagradza każde zadanie – rozważ warunek jakości.' : '';
+        AR.sc.push(s); AR.tab = 'scen'; arSave(); closeSheet(); render(); return toast('Zapisano scenariusz „' + s.name + '”.' + warn);
+      }
+      if (f.dataset.form === 'arkudos') {
+        var to = $('#arKw').value, r = ($('[data-act="arkr"][aria-pressed="true"]') || {}).textContent || 'Pomoc', t = $('#arKt').value.trim();
+        AR.kudos.unshift([today().slice(0, 5), AR.me, to, r + (t ? ': ' + t : '')]); AR.xp[to] = (AR.xp[to] || 0) + 5; arFeed(to, '👏 +5 XP', 'Kudos od ' + AR.me + ' – ' + r);
+        arSave(); closeSheet(); render(); return arPop('👏 Kudos!', AR.me + ' → ' + to);
+      }
+    }
+  };
+  VIEWS.arenatv = {
+    title: 'GRAFFI Arena – telebim', sub: 'HALA · ' + ARSEASON.name.toUpperCase(),
+    html: function () {
+      var T = arTeams(), top = arAll().slice(0, 3), f = AR.feed;
+      return '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-go="arena">← Arena</button><button class="btn" data-act="artvfs">⛶ Pełny ekran</button>' + qrvBtn('arenatv') + '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><div><span class="eyebrow">' + ARSEASON.name + ' · motyw: ' + ARSEASON.theme + '</span><h1 style="font-size:30px;margin:0">Liga hali – <span class="t-pink">' + esc(T[0].n) + '</span> prowadzi</h1></div><span class="num" style="font-size:48px;line-height:1" id="artvclock">--:--</span></div>' +
+        '<div class="ar-tv"><div class="grid" style="gap:14px">' + arBossHtml(true) +
+        '<section class="card"><span class="eyebrow">Liga zespołów</span>' + T.map(function (t, i) { return '<div class="ar-tvrow"><span>' + (i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1) + '.') + ' ' + esc(t.n) + '</span><span><small class="t-dim" style="font-size:14px">jakość ' + t.ftr + '% · termin ' + t.on + '%</small> <b class="t-gold tab">' + t.score + '</b></span></div>'; }).join('') + '</section></div>' +
+        '<div class="grid" style="gap:14px"><section class="card"><span class="eyebrow">TOP 3 sezonu (za zgodą)</span>' + top.map(function (p, i) { return '<div class="ar-tvrow"><span>' + ['🥇', '🥈', '🥉'][i] + ' ' + esc(p.n) + '<br><small class="t-dim" style="font-size:13px">' + ARLV[p.lv][2] + ' ' + ARLV[p.lv][1] + ' · 🔥 ' + p.streak + '</small></span><b class="tab">' + p.xp + ' XP</b></div>'; }).join('') + '</section>' +
+        '<section class="card" id="artvfeed"><span class="eyebrow">Na żywo</span>' + f.slice(0, 6).map(function (x) { return '<div class="ar-tvrow ar-feed" style="font-size:16px"><span><b style="font-weight:500">' + esc(x[1]) + '</b><br><small class="t-dim" style="font-size:13px">' + esc(x[3]) + '</small></span><b class="t-gold tab">' + esc(x[2]) + '</b></div>'; }).join('') + '</section>' +
+        '<section class="card"><span class="eyebrow">Ostatnie kudos</span>' + AR.kudos.slice(0, 2).map(function (k) { return '<div class="ar-tvrow" style="font-size:15px"><span>👏 ' + esc(k[1]) + ' → <b>' + esc(k[2]) + '</b><br><small class="t-dim">' + esc(k[3]) + '</small></span></div>'; }).join('') + '</section></div></div>';
+    },
+    mount: function () { var n = $('#nav [data-go="kadry"]'); if (n) n.setAttribute('aria-current', 'page'); },
+    tick: function () { var c = $('#artvclock'); if (c) { var d = new Date(); c.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()); } },
+    on: function (act) { if (act === 'artvfs') { try { document.documentElement.requestFullscreen(); } catch (e) { toast('Pełny ekran niedostępny'); } } }
+  };
+  QRV.arenatv = ['Telebim GRAFFI Arena', 'Liga zespołów, boss miesiąca, odznaki i kudos na żywo – na telewizorze przy hali'];
+  /* agenci AI grywalizacji */
+  var ARAG = [
+    { id: 'arcoach', mod: 'M9 Pracownicy', name: 'Coach GRAFFI (grywalizacja)', desc: 'Dobiera każdemu pracownikowi misje tygodnia z jego wskaźników, podpowiada jak awansować i chwali postępy.', model: 'm3', temp: 0.4, max: 1, web: false, prompt: 'Jesteś Coachem GRAFFI w systemie grywalizacji Graffico. Dostajesz kartę pracownika: XP, poziom, seria bez poprawek, odsetek OK za 1. razem, terminowość, kompetencje z macierzy i ostatnie zadania.\n\nZadanie:\n1. Pochwal konkretnie (1 zdanie) – za co, z danymi.\n2. Zaproponuj 3 misje na tydzień: mierzalne, osiągalne, związane z jakością lub terminem, nie z ilością sztuk.\n3. Wskaż 1 krok rozwoju w kompetencjach.\nPisz krótko, po polsku, przyjaźnie, bez porównywania z innymi osobami z imienia.' },
+    { id: 'arfair', mod: 'M9 Pracownicy', name: 'Sędzia fair play', desc: 'Sprawdza scenariusze punktacji i zdarzenia: nabijanie punktów, nagradzanie ilości kosztem jakości, nierówne szanse gniazd.', model: 'm2', temp: 0, max: 1, web: false, prompt: 'Jesteś sędzią fair play grywalizacji w Graffico. Dostajesz listę scenariuszy punktacji (zdarzenie, warunki, nagroda) i statystyki XP wg zespołów.\n\nZadanie:\n1. Wskaż reguły, które da się nabić (np. dzielenie zadań, nagroda bez warunku jakości).\n2. Sprawdź, czy któryś zespół ma systemowo łatwiej (normalizacja do normy gniazda).\n3. Zaproponuj poprawki reguł.\nNie oceniaj ludzi, oceniaj reguły.' },
+    { id: 'armaster', mod: 'M9 Pracownicy', name: 'Mistrz gry', desc: 'Projektuje bossa miesiąca i motyw sezonu z realnych problemów: wąskie gardła APS, reklamacje, zaległości.', model: 'm2', temp: 0.5, max: 1, web: false, prompt: 'Jesteś Mistrzem gry w grywalizacji Graffico. Dostajesz obciążenie gniazd z APS, zaległości, statystyki jakości i reklamacji.\n\nZadanie: zaproponuj bossa na kolejny miesiąc (nazwa, mierzalny „pasek życia”, termin, nagroda zespołowa) oraz 2 misje zespołowe. Cel ma rozwiązywać prawdziwy problem firmy i być osiągalny.' }
+  ];
+  ARAG.forEach(function (a) { AGMOD[a.id] = a.mod; AG9.push(a); if (!AGENTS0.some(function (x) { return x.id === a.id; })) AGENTS0.push(a); if (!agentById(a.id)) AGENTS.push(JSON.parse(JSON.stringify(a))); });
+  AGDATA.arcoach = function () { var p = arP(AR.me); return { pracownik: p.n, zespol: p.team, xp: p.xp, poziom: ARLV[p.lv][1], seria: p.streak, ok_za_1_razem: p.ftr, terminowosc: p.on, odznaki: p.bd, zadania: arTasks(p.n).map(function (t) { return { zlecenie: t[0], zadanie: t[1], ocena: t[2] }; }) }; };
+  AGDATA.arfair = function () { return { scenariusze: AR.sc.map(function (s) { return { nazwa: s.name, kiedy: s.ev, jesli: s.c, xp: s.xp, gc: s.gc, mnoznik: s.mult, zakres: s.scope, aktywny: s.on }; }), zespoly: arTeams().map(function (t) { return { zespol: t.n, os: t.ppl.length, sr_xp: t.avg, ftr: t.ftr, terminowosc: t.on }; }) }; };
+  AGDATA.armaster = function () { return { boss_obecny: AR.boss, zespoly: arTeams().map(function (t) { return { zespol: t.n, ftr: t.ftr, terminowosc: t.on }; }) }; };
+  AGDEMO.arcoach = function () { var p = arP(AR.me), q = arQuests(p); return '<b>Brawo, ' + esc(p.n.split(' ')[0]) + '!</b><p style="margin:4px 0">Seria ' + p.streak + ' zadań bez poprawek i ' + p.ftr + '% odbiorów OK za 1. razem – to Twój najlepszy wynik w sezonie.</p><b>Misje na ten tydzień</b>' + li(q.slice(0, 3).map(function (x) { return esc(x[0]) + ' – ' + x[3]; })) + '<b>Krok rozwoju</b><p style="margin:4px 0">' + (p.e && p.e.lv && p.e.lv[1] < 3 ? 'Spawanie TIG: 4 zadania OK za 1. razem i ocena mentora (Artur K.) dadzą poziom ●●●.' : 'Zostań mentorem: przeszkol jedną osobę na swoim gnieździe – odznaka 🤝 Mentor i +60 XP.') + '</p>'; };
+  AGDEMO.arfair = function () { var w = AR.sc.filter(function (s) { return s.on && s.c.indexOf('zawsze') > -1 && /Zadanie zakończone|Kudos/.test(s.ev); }), T = arTeams(); return '<b>Reguły do poprawy</b>' + li(w.length ? w.map(function (s) { return '„' + esc(s.name) + '” – nagroda bez warunku jakości; dodaj „OK za 1. razem” albo limit dzienny'; }) : ['Brak reguł, które nagradzają samą ilość – dobrze.']) + '<b>Równe szanse</b><p style="margin:4px 0">Różnica średniego XP między zespołami: ' + (T[0].avg - T[T.length - 1].avg) + ' XP. ' + (T[0].avg - T[T.length - 1].avg > 300 ? 'Za duża – włącz normalizację do normy gniazda dla „' + esc(T[T.length - 1].n) + '”.' : 'W normie.') + '</p><b>Kudos</b><p style="margin:4px 0">Brak wzajemnych „wymian” kudos między tymi samymi osobami. Limit 3/tydzień działa.</p>'; };
+  AGDEMO.armaster = function () { return '<b>Boss na listopad: „Czerwona flaga TIG”</b><p style="margin:4px 0">Pasek życia: 64 h zaległości na gnieździe Spawalnia TIG (APS pokazuje obciążenie 130%). Termin 30.11. Nagroda: śniadanie dla hali + 30 GC dla uczestników.</p><b>Misje zespołowe</b>' + li(['Spawalnia i szlif: 10 dni z rzędu bez poprawek lica liter → +50 GC dla zespołu', 'Elektryka LED: każdy kaseton testowany 24 h przed wysyłką, zero reklamacji LED w miesiącu → odznaka zespołowa']) + '<b>Motyw sezonu 2 (styczeń–marzec)</b><p style="margin:4px 0">„Montaż bez powrotów” – nacisk na kompletne protokoły i zdjęcia; w sezonie 1 to główna przyczyna dodatkowych wyjazdów.</p>'; };
+  /* wejścia do Areny */
+  var kadryHtmlAR = VIEWS.kadry.html; VIEWS.kadry.html = function () { return kadryHtmlAR.apply(this, arguments).replace('<button class="btn" data-act="agmap">🤖 Agenci AI</button>', '<button class="btn" data-act="agmap">🤖 Agenci AI</button><button class="btn p" data-go="arena">🎮 GRAFFI Arena</button>'); };
+  var coinsHtmlAR = coinsHtml; coinsHtml = function () { return '<div class="alert a-green"><span class="chip c-green">NOWE</span><span>Grafficoiny to teraz waluta w <b>GRAFFI Arena</b>: punkty jakości, poziomy, misje, boss miesiąca i odznaki. <a href="#arena" data-go="arena">Otwórz Arenę →</a></span></div>' + coinsHtmlAR.apply(this, arguments); }; K9.coins = coinsHtml;
+  var halaHtmlAR = VIEWS.hala.html; VIEWS.hala.html = function () { return halaHtmlAR.apply(this, arguments).replace('<button class="btn" data-go="stanowisko" style="align-self:flex-start">🖥 Monitory przy gniazdach →</button>', '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-go="stanowisko">🖥 Monitory przy gniazdach →</button><button class="btn" data-go="arenatv">🎮 Arena na telebimie →</button></div>'); };
+  var tabletHtmlAR = VIEWS.tablet.html; VIEWS.tablet.html = function () { var p = arP('Artur K.'); return '<button class="card" data-go="arena" style="display:flex;gap:12px;align-items:center;text-align:left;color:var(--fg);border-color:rgba(227,0,111,.45);cursor:pointer"><span style="font-size:30px">' + ARLV[p.lv][2] + '</span><span style="flex:1;min-width:0"><b>Twoja gra: poziom ' + (p.lv + 1) + ' – ' + ARLV[p.lv][1] + '</b><br><small class="t-muted">🔥 seria ' + p.streak + ' · ' + p.xp + ' XP · misje tygodnia 1/4 · boss: ' + AR.boss.hp + ' h do pokonania</small></span><span class="t-pink">→</span></button>' + tabletHtmlAR.apply(this, arguments); };
+  var botAskAR = botAsk;
+  botAsk = function (q) {
+    var n = ' ' + norm(String(q || '')) + ' ';
+    if (!BOT.att.length && /arena|grywaliz|odznak|punkty jakosci| xp |poziom gracza|boss|scenariusz punkt|kudos|misje tygodnia/.test(n)) {
+      var p = arP(AR.me), T = arTeams();
+      BOT.msgs.push({ me: true, h: esc(q) });
+      BOT.msgs.push({ h: src('GRAFFI Arena') + '<b>' + ARSEASON.name + ' – motyw „' + ARSEASON.theme + '”</b>' + ul(['Liga zespołów: prowadzi <b>' + esc(T[0].n) + '</b> (' + T[0].score + ' pkt, OK za 1. razem ' + T[0].ftr + '%)', 'Boss miesiąca „' + esc(AR.boss.name) + '”: zostało <b>' + AR.boss.hp + ' h</b> z ' + AR.boss.max + ' h, do ' + AR.boss.end, esc(p.n) + ': poziom ' + (p.lv + 1) + ' – ' + ARLV[p.lv][1] + ', ' + p.xp + ' XP, seria 🔥 ' + p.streak, 'Aktywne scenariusze punktów: ' + AR.sc.filter(function (s) { return s.on; }).length]) + '<div style="margin-top:6px">' + L('view:arena', 'Otwórz Arenę') + '</div>', live: false });
+      return botRender();
+    }
+    return botAskAR(q);
   };
 
   var CAL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
